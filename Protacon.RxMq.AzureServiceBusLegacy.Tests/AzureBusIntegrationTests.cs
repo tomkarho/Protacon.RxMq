@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Reactive.Linq;
-using System.Threading;
 using FluentAssertions;
-using Microsoft.ServiceBus.Messaging;
 using Protacon.RxMq.AzureServiceBusLegacy.Tests.Messages;
 using Xunit;
 
