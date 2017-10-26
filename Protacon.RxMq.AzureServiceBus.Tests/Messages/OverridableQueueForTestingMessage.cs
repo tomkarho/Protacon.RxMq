@@ -1,7 +1,6 @@
-﻿using System;
-using Protacon.RxMq.Abstractions;
+﻿using Protacon.RxMq.Abstractions;
 
-namespace Protacon.RxMq.AzureServiceBusLegacy.Tests.Messages
+namespace Protacon.RxMq.AzureServiceBus.Tests.Messages
 {
     public class OverridableQueueForTestingMessage: IRoutingKey
     {
