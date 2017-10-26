@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net45</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="System.Reactive" Version="4.0.0-preview00001" />
+    <PackageReference Include="WindowsAzure.ServiceBus" Version="4.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Protacon.RxMq.Abstractions\Protacon.RxMq.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

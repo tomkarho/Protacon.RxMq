@@ -27,17 +27,13 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .Timeout(TimeSpan.FromSeconds(5));
         }
 
-        [Fact(Skip = "TODO: This is actually kind of hard requirement to fullfill with current state of library.")]
+        [Fact(Skip = "TODO: This is actually kind of hard requirement to fullfill with current state of library. https://github.com/Azure/azure-service-bus-dotnet/issues/65")]
         public void WhenQueueDoesntExistYet_ThenCreateNew()
         {
             var bus = new AzureBusMq(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusMq>>());
 
-            var message = new TestMessage
-            {
-                ExampleId = Guid.NewGuid()
-            };
-
-            message.SetNewRoutingKeyForTesting($"{message.RoutingKey}-{Guid.NewGuid()}");
+            OverridableQueueForTestingMessage.RoutingKeyOverride = $"queuegeneratortest_{Guid.NewGuid()}";
+            var message = new OverridableQueueForTestingMessage();
 
             bus.Invoking(x => x.SendAsync(message).Wait()).Should().NotThrow<Exception>();
         }
