@@ -1,4 +1,4 @@
-$projectsToPublish = @("Protacon.RxMq.Abstractions","Protacon.RxMq.AzureServiceBus")
+$projectsToPublish = @("Protacon.RxMq.Abstractions","Protacon.RxMq.AzureServiceBus","Protacon.RxMq.AzureServiceBusLegacy")
 $projectsToTest = @("Protacon.RxMq.AzureServiceBus.Tests")
 
 $projectsToPublish | foreach {
