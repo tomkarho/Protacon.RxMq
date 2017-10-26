@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.Abstractions"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.AzureServiceBus", "Protacon.RxMq.AzureServiceBus\Protacon.RxMq.AzureServiceBus.csproj", "{D64BB6F2-5613-45E9-B440-3E579E8F2008}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protacon.RxMq.AzureServiceBus.Tests", "Protacon.RxMq.AzureServiceBus.Tests\Protacon.RxMq.AzureServiceBus.Tests.csproj", "{6A7DF81D-5B29-462B-BFC0-D67372D92C58}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{D64BB6F2-5613-45E9-B440-3E579E8F2008}.Release|x64.Build.0 = Release|Any CPU
 		{D64BB6F2-5613-45E9-B440-3E579E8F2008}.Release|x86.ActiveCfg = Release|Any CPU
 		{D64BB6F2-5613-45E9-B440-3E579E8F2008}.Release|x86.Build.0 = Release|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Debug|x64.Build.0 = Debug|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Debug|x86.Build.0 = Debug|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Release|x64.ActiveCfg = Release|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Release|x64.Build.0 = Release|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Release|x86.ActiveCfg = Release|Any CPU
+		{6A7DF81D-5B29-462B-BFC0-D67372D92C58}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

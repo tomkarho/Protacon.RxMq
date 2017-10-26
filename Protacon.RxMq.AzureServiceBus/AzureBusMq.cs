@@ -30,7 +30,6 @@ namespace Protacon.RxMq.AzureServiceBus
                 var route = new T().RoutingKey;
 
                 _queueClient = new QueueClient(settings.ConnectionString, route);
-
                 _queueClient.RegisterMessageHandler(
                     async (message, _) =>
                     {
