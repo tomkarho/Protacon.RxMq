@@ -35,7 +35,7 @@ namespace Protacon.RxMq.AzureServiceBus
 
             public Task SendAsync(T message)
             {
-                var body = new Message(Encoding.UTF8.GetBytes(
+                var contentJsonBytes = Encoding.UTF8.GetBytes(
                     JsonConvert.SerializeObject(
                         new {Data = message},
                         Formatting.None,
@@ -43,7 +43,9 @@ namespace Protacon.RxMq.AzureServiceBus
                         {
                             ContractResolver = new CamelCasePropertyNamesContractResolver()
                         }
-                    )));
+                    ));
+
+                var body = new Message(contentJsonBytes) { ContentType = "application/json" };
 
                 return _queueClient.SendAsync(body);
             }

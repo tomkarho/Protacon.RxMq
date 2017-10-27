@@ -1,6 +1,7 @@
 ﻿using Protacon.RxMq.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reactive.Subjects;
 using System.Text;
@@ -39,12 +40,18 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                 {
                     try
                     {
-                        var body = Encoding.UTF8.GetString(message.GetBody<byte[]>());
+                        var bodyStream = message.GetBody<Stream>();
 
-                        logMessage($"Received '{route}': {body}");
+                        using (var reader = new StreamReader(bodyStream))
+                        {
+                            var body = reader.ReadToEnd();
 
-                        Subject.OnNext(new Envelope<T>(JObject.Parse(body)["data"].ToObject<T>(), new MessageAckAzureServiceBus(message)));
-                        message.Complete();
+                            logMessage($"Received '{route}': {body}");
+
+                            Subject.OnNext(new Envelope<T>(JObject.Parse(body)["data"].ToObject<T>(),
+                                new MessageAckAzureServiceBus(message)));
+                            message.Complete();
+                        }
                     }
                     catch (Exception ex)
                     {

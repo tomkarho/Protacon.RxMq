@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.ServiceBus;
@@ -45,7 +46,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             {
                 var sender = _messagingFactory.CreateMessageSender(new T().RoutingKey);
 
-                var body = new BrokeredMessage(Encoding.UTF8.GetBytes(
+                var body = 
                     JsonConvert.SerializeObject(
                         new {Data = message},
                         Formatting.None,
@@ -53,11 +54,14 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                         {
                             ContractResolver = new CamelCasePropertyNamesContractResolver()
                         }
-                    )));
+                    );
 
                 _logMessage($"{nameof(SendAsync)} sending message '{body}'");
 
-                return sender.SendAsync(body)
+                var bytes = Encoding.UTF8.GetBytes(body);
+                var stream = new MemoryStream(bytes, writable: false);
+
+                return sender.SendAsync(new BrokeredMessage(stream) { ContentType = "application/json" })
                     .ContinueWith(task =>
                     {
                         if (task.Exception != null)
