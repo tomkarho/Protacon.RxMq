@@ -13,16 +13,17 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         [Fact]
         public void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var bus = new AzureBusMq(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusMq>>());
+            var subscriber = new AzureBusSubscriber(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureBusPublisher(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusPublisher>>());
 
             var id = Guid.NewGuid();
 
-            bus.SendAsync(new TestMessage
+            publisher.SendAsync(new TestMessage
             {
                 ExampleId = Guid.NewGuid()
             }).Wait();
 
-            bus.Messages<TestMessage>()
+            subscriber.Messages<TestMessage>()
                 .Where(x => x.Message.ExampleId == id)
                 .Timeout(TimeSpan.FromSeconds(5));
         }
@@ -30,12 +31,12 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         [Fact(Skip = "TODO: This is actually kind of hard requirement to fullfill with current state of library. https://github.com/Azure/azure-service-bus-dotnet/issues/65")]
         public void WhenQueueDoesntExistYet_ThenCreateNew()
         {
-            var bus = new AzureBusMq(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusMq>>());
+            var publisher = new AzureBusPublisher(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusPublisher>>());
 
             OverridableQueueForTestingMessage.RoutingKeyOverride = $"queuegeneratortest_{Guid.NewGuid()}";
             var message = new OverridableQueueForTestingMessage();
 
-            bus.Invoking(x => x.SendAsync(message).Wait()).Should().NotThrow<Exception>();
+            publisher.Invoking(x => x.SendAsync(message).Wait()).Should().NotThrow<Exception>();
         }
     }
 }
