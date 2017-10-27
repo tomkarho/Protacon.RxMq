@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Subjects;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using Protacon.RxMq.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -39,7 +36,11 @@ namespace Protacon.RxMq.AzureServiceBus
 
                             logging.LogInformation($"Received '{route}': {body}");
 
-                            Subject.OnNext(new Envelope<T>(JObject.Parse(body)["data"].ToObject<T>(), new MessageAckAzureServiceBus(queueClient, message.SystemProperties.LockToken)));
+                            var asObject = AsObject(body);
+
+                            Subject.OnNext(
+                                new Envelope<T>(asObject,
+                                new MessageAckAzureServiceBus(queueClient, message.SystemProperties.LockToken)));
                         }
                         catch (Exception ex)
                         {
@@ -49,6 +50,16 @@ namespace Protacon.RxMq.AzureServiceBus
                     {
                         logging.LogError($"At route '{route}' error occurred: {e.Exception}");
                     }));
+            }
+
+            private static T AsObject(string body)
+            {
+                var parsed = JObject.Parse(body);
+
+                if (parsed["data"] == null)
+                    throw new InvalidOperationException("Library expects data wrapped as { data: { ... } }");
+
+                return parsed.ToObject<T>();
             }
 
             public Subject<Envelope<T>> Subject { get; } = new Subject<Envelope<T>>();
