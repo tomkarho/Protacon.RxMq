@@ -13,34 +13,32 @@ using Newtonsoft.Json.Serialization;
 
 namespace Protacon.RxMq.AzureServiceBusLegacy
 {
-    public class AzureBusMq: IMq
+    public class AzureBusSubscriber: IMqSubscriber
     {
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
         private readonly Dictionary<Type, IBinding> _bindings = new Dictionary<Type, IBinding>();
-        private MessagingFactory _factory;
-        private NamespaceManager _namespaceManager;
+        private readonly MessagingFactory _factory;
+        private readonly NamespaceManager _namespaceManager;
 
         private class Binding<T> : IBinding where T : IRoutingKey, new()
         {
-            private readonly MessagingFactory _messagingFactory;
+            private MessageReceiver _receiver;
             public Type Type { get; } = typeof(T);
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, Action<string> logMessage, Action<string> logError)
             {
-                _messagingFactory = messagingFactory;
-
                 var route = new T().RoutingKey;
 
-                var receiver = messagingFactory.CreateMessageReceiver(route, ReceiveMode.PeekLock);
+                _receiver = messagingFactory.CreateMessageReceiver(route, ReceiveMode.PeekLock);
 
                 if (!namespaceManager.QueueExists(route))
                 {
                     namespaceManager.CreateQueue(route);
                 }
 
-                receiver.OnMessage(message =>
+                _receiver.OnMessage(message =>
                 {
                     try
                     {
@@ -60,29 +58,14 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
             public Subject<Envelope<T>> Subject { get; } = new Subject<Envelope<T>>();
 
-            public Task SendAsync(T message)
-            {
-                var sender = _messagingFactory.CreateMessageSender(new T().RoutingKey);
-                var body = new BrokeredMessage(Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject(
-                        new { Data = message },
-                        Formatting.None,
-                        new JsonSerializerSettings
-                        {
-                            ContractResolver = new CamelCasePropertyNamesContractResolver()
-                        }
-                    )));
-
-                return sender.SendAsync(body);
-            }
-
             public void Dispose()
             {
                 Subject?.Dispose();
+                _receiver.Close();
             }
         }
 
-        public AzureBusMq(MqSettings settings, Action<string> logMessage, Action<string> logError)
+        public AzureBusSubscriber(MqSettings settings, Action<string> logMessage, Action<string> logError)
         {
             _logMessage = logMessage;
             _logError = logError;
@@ -105,19 +88,6 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             _bindings.Select(x => x.Value)
                 .ToList()
                 .ForEach(x => x.Dispose());
-        }
-
-        public IObservable<Envelope<T>> SendRpc<T>(T message) where T : IRoutingKey, new()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task SendAsync<T>(T message) where T : IRoutingKey, new()
-        {
-            if (!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _logMessage, _logError));
-
-            return ((Binding<T>)_bindings[typeof(T)]).SendAsync(message);
         }
     }
 }

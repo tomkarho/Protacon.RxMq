@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace Protacon.RxMq.AzureServiceBus
 {
-    public class AzureBusMq: IMq, IDisposable
+    public class AzureBusMq: IMqSubscriber, IDisposable
     {
         private readonly MqSettings _settings;
         private readonly ILogger<AzureBusMq> _logging;

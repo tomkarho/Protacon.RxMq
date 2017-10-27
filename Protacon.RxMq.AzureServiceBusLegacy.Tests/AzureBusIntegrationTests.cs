@@ -11,31 +11,37 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
         [Fact]
         public void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var bus = new AzureBusMq(TestSettings.MqSettings, _ => { }, _ => { });
+            var subscriber = new AzureBusSubscriber(TestSettings.MqSettings, _ => { }, _ => { });
+            var publisher = new AzureBusPublisher(TestSettings.MqSettings, _ => { }, _ => { });
 
             var id = Guid.NewGuid();
 
-            bus.SendAsync(new TestMessage
+            publisher.SendAsync(new TestMessage
             {
                 ExampleId = id
             }).Wait();
 
-            bus.Messages<TestMessage>()
+            subscriber.Messages<TestMessage>()
                 .Where(x => x.Message.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(30))
+                .Timeout(TimeSpan.FromSeconds(10))
                 .FirstAsync().Wait();
+
+            subscriber.Dispose();
         }
 
         [Fact]
         public void WhenQueueDoesntExistYet_ThenCreateNew()
         {
-            var bus = new AzureBusMq(TestSettings.MqSettings, _ => {}, _ => {});
+            var subscriber = new AzureBusSubscriber(TestSettings.MqSettings, _ => { }, _ => { });
+            var publisher = new AzureBusPublisher(TestSettings.MqSettings, _ => { }, _ => { });
 
             OverridableQueueForTestingMessage.RoutingKeyOverride = $"queuegeneratortest_{Guid.NewGuid()}";
             var message = new OverridableQueueForTestingMessage();
 
-            bus.Invoking(x => x.SendAsync(message).Wait())
+            publisher.Invoking(x => x.SendAsync(message).Wait())
                 .ShouldNotThrow<Exception>();
+
+            subscriber.Dispose();
         }
     }
 }
