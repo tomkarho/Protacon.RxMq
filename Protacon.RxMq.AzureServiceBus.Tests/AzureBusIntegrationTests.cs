@@ -13,7 +13,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         [Fact]
         public void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var subscriber = new AzureBusSubscriber(TestSettings.MqSettingsOptions(), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var subscriber = new AzureBusSubscriber(TestSettings.MqSettingsOptions(), new AzureQueueManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusSubscriber>>());
             var publisher = new AzureBusPublisher(TestSettings.MqSettingsOptions(), new AzureQueueManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusPublisher>>());
 
             var id = Guid.NewGuid();
@@ -36,16 +36,67 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             var settings = TestSettings.MqSettingsOptions();
 
-            settings.Value.RouteBuilderForPublisher = _ => testQueueName;
-            settings.Value.RouteBuilderForSubscriber = _ => testQueueName;
+            settings.Value.QueueNameBuilderForPublisher = _ => testQueueName;
+            settings.Value.QueueNameBuilderForSubscriber = _ => testQueueName;
 
             var publisher = new AzureBusPublisher(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
-            var receiver = new AzureBusSubscriber(settings, Substitute.For<ILogger<AzureBusSubscriber>>());
+            var receiver = new AzureBusSubscriber(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
 
             var message = new TestMessage
             {
                 ExampleId = Guid.NewGuid(),
                 Something = "abc"
+            };
+
+            // Act.
+            publisher
+                .Invoking(x => x.SendAsync(message).Wait())
+                .Should().NotThrow<Exception>();
+
+            // Assert.
+            var result = await receiver.Messages<TestMessage>()
+                .Timeout(TimeSpan.FromSeconds(20))
+                .FirstAsync();
+
+            result.Message.ExampleId.Should().Be(message.ExampleId);
+        }
+
+        [Fact]
+        public async void WhenDynamicQueuesAreUsed_ThenDeliverMessagesCorrectly()
+        {
+            var tenant2 = Guid.NewGuid();
+
+            // Arrange.
+            var settings = TestSettings.MqSettingsOptions();
+
+            settings.Value.QueueNameBuilderForPublisher = x =>
+            {
+                if (x is TestMessage m)
+                {
+                    return m.RoutingKey + "_" + m.TenantId;
+                }
+                throw new InvalidOperationException();
+            };
+
+            settings.Value.QueueNameBuilderForSubscriber = type =>
+            {
+                var instance = Activator.CreateInstance(type);
+
+                if (instance is TestMessage m)
+                {
+                    return m.RoutingKey + "_" + tenant2;
+                }
+                throw new InvalidOperationException();
+            };
+
+            var publisher = new AzureBusPublisher(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
+            var receiver = new AzureBusSubscriber(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+
+            var message = new TestMessage
+            {
+                ExampleId = Guid.NewGuid(),
+                Something = "abc",
+                TenantId = tenant2.ToString()
             };
 
             // Act.

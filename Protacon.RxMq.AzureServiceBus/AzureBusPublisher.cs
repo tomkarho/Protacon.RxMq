@@ -17,26 +17,23 @@ namespace Protacon.RxMq.AzureServiceBus
         private readonly MqSettings _settings;
         private readonly AzureQueueManagement _queueManagement;
         private readonly ILogger<AzureBusPublisher> _logging;
-        private readonly Dictionary<Type, IBinding> _bindings = new Dictionary<Type, IBinding>();
+        private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
 
-        private class Binding<T>: IBinding where T: IRoutingKey, new()
+        private class Binding: IDisposable
         {
-            private readonly ILogger<AzureBusPublisher> _logging;
             private readonly QueueClient _queueClient;
-            public Type Type { get; } = typeof(T);
 
-            internal Binding(MqSettings settings, ILogger<AzureBusPublisher> logging, AzureQueueManagement queueManagement)
+            internal Binding(MqSettings settings, ILogger<AzureBusPublisher> logging, AzureQueueManagement queueManagement, string queue)
             {
-                _logging = logging;
+                queueManagement.CreateIfMissing(queue);
+                _queueClient = new QueueClient(settings.ConnectionString, queue);
 
-                // TODO: implement this correctly, caching should be type + route key.
-                var route = settings.RouteBuilderForPublisher(Activator.CreateInstance(typeof(T)));
-                _queueClient = new QueueClient(settings.ConnectionString, route);
+                logging.LogDebug($"Created new MQ binding '{queue}'.");
 
-                queueManagement.Create(route);
+                queueManagement.CreateIfMissing(queue);
             }
 
-            public Task SendAsync(T message)
+            public Task SendAsync(object message)
             {
                 var contentJsonBytes = Encoding.UTF8.GetBytes(
                     JsonConvert.SerializeObject(
@@ -55,6 +52,7 @@ namespace Protacon.RxMq.AzureServiceBus
 
             public void Dispose()
             {
+                _queueClient.CloseAsync();
             }
         }
 
@@ -73,10 +71,14 @@ namespace Protacon.RxMq.AzureServiceBus
         }
         public Task SendAsync<T>(T message) where T : IRoutingKey, new()
         {
-            if (!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));
+            var queue = _settings.QueueNameBuilderForPublisher(message);
 
-            return ((Binding<T>)_bindings[typeof(T)]).SendAsync(message);
+            if (!_bindings.ContainsKey(queue))
+                _bindings.Add(queue, new Binding(_settings, _logging, _queueManagement, queue));
+
+            _logging.LogDebug($"Sending message to queue '{message}'");
+
+            return _bindings[queue].SendAsync(message);
         }
     }
 }

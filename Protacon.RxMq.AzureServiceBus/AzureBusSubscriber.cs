@@ -14,6 +14,7 @@ namespace Protacon.RxMq.AzureServiceBus
     public class AzureBusSubscriber: IMqSubscriber
     {
         private readonly MqSettings _settings;
+        private readonly AzureQueueManagement _queueManagement;
         private readonly ILogger<AzureBusSubscriber> _logging;
         private readonly Dictionary<Type, IBinding> _bindings = new Dictionary<Type, IBinding>();
 
@@ -21,11 +22,13 @@ namespace Protacon.RxMq.AzureServiceBus
         {
             public Type Type { get; } = typeof(T);
 
-            internal Binding(MqSettings settings, ILogger<AzureBusSubscriber> logging)
+            internal Binding(MqSettings settings, ILogger<AzureBusSubscriber> logging, AzureQueueManagement queueManagement)
             {
-                var route = settings.RouteBuilderForSubscriber(typeof(T));
+                var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
 
-                var queueClient = new QueueClient(settings.ConnectionString, route);
+                queueManagement.CreateIfMissing(queueName);
+
+                var queueClient = new QueueClient(settings.ConnectionString, queueName);
 
                 queueClient.RegisterMessageHandler(
                     async (message, _) =>
@@ -34,7 +37,7 @@ namespace Protacon.RxMq.AzureServiceBus
                         {
                             var body = Encoding.UTF8.GetString(message.Body);
 
-                            logging.LogInformation($"Received '{route}': {body}");
+                            logging.LogInformation($"Received '{queueName}': {body}");
 
                             var asObject = AsObject(body);
 
@@ -44,11 +47,11 @@ namespace Protacon.RxMq.AzureServiceBus
                         }
                         catch (Exception ex)
                         {
-                            logging.LogError($"Message {route}': {message} -> consumer error: {ex}");
+                            logging.LogError($"Message {queueName}': {message} -> consumer error: {ex}");
                         }
                     }, new MessageHandlerOptions(async e =>
                     {
-                        logging.LogError($"At route '{route}' error occurred: {e.Exception}");
+                        logging.LogError($"At route '{queueName}' error occurred: {e.Exception}");
                     }));
             }
 
@@ -70,16 +73,17 @@ namespace Protacon.RxMq.AzureServiceBus
             }
         }
 
-        public AzureBusSubscriber(IOptions<MqSettings> settings, ILogger<AzureBusSubscriber> logging)
+        public AzureBusSubscriber(IOptions<MqSettings> settings, AzureQueueManagement queueManagement, ILogger<AzureBusSubscriber> logging)
         {
             _settings = settings.Value;
+            _queueManagement = queueManagement;
             _logging = logging;
         }
 
         public IObservable<Envelope<T>> Messages<T>() where T: IRoutingKey, new()
         {
             if(!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging));
+                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));
 
             return ((Binding<T>) _bindings[typeof(T)]).Subject;
         }

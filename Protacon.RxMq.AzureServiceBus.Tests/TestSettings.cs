@@ -20,7 +20,10 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 ConnectionString = config.GetConfig("ConnectionString"),
                 AzureSpAppId = config.GetConfig("AzureSpAppId"),
                 AzureSpPassword = config.GetConfig("AzureSpPassword"),
-                AzureSpTenantId = config.GetConfig("AzureSpTenantId")
+                AzureSpTenantId = config.GetConfig("AzureSpTenantId"),
+                AzureNamespace = config.GetConfig("AzureNamespace"),
+                AzureResourceGroup = config.GetConfig("AzureResourceGroup"),
+                AzureSubscriptionId = config.GetConfig("AzureSubscriptionId")
             };
         }
 

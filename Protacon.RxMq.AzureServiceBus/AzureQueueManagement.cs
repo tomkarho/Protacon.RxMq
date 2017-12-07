@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ServiceBus.Fluent;
 using Microsoft.Extensions.Options;
@@ -7,39 +8,33 @@ namespace Protacon.RxMq.AzureServiceBus
 {
     public class AzureQueueManagement
     {
-        private readonly IOptions<MqSettings> _settings;
+        private readonly MqSettings _settings;
 
         public AzureQueueManagement(IOptions<MqSettings> settings)
         {
-            _settings = settings;
+            _settings = settings.Value;
         }
 
-        public void Create(string queuName)
+        public void CreateIfMissing(string queuName)
         {
-            var subscriptionId = "8074f004-3a2e-4cac-b516-56500f988628";
-
             var azureCredentials = SdkContext.AzureCredentialsFactory
                 .FromServicePrincipal(
-                    clientId: "58470d53-30f0-4561-9643-f919266071fe", 
-                    clientSecret: "06a7f5d3-38a1-4e87-9b71-fc5a058da294", 
-                    tenantId: "7728b60e-9961-4c7d-b6dd-8b5b8a2f887a",
+                    clientId: _settings.AzureSpAppId, 
+                    clientSecret: _settings.AzureSpPassword, 
+                    tenantId: _settings.AzureSpTenantId,
                     environment: AzureEnvironment.AzureGlobalCloud);
                 
-            var serviceBusManager = ServiceBusManager.Authenticate(azureCredentials, subscriptionId);
+            var serviceBusManager = ServiceBusManager.Authenticate(azureCredentials, _settings.AzureSubscriptionId);
 
-            // namespace manager
-            var @namespace = serviceBusManager.Namespaces.GetByResourceGroup("rxmq-tests", "rxmq-test");
+            var @namespace = serviceBusManager.Namespaces.GetByResourceGroup(_settings.AzureResourceGroup, _settings.AzureNamespace);
 
-            // check if queue exists
+            if(@namespace == null)
+                throw new InvalidOperationException($"Azure namespace '{_settings.AzureNamespace}' not found.");
+
             var queue = @namespace.Queues.List().FirstOrDefault(x => x.Name == queuName);
             if (queue == null)
             {
-                // create a queue
-                var createdQueue = @namespace.Queues.Define(queuName)
-                    .WithSizeInMB(1024)
-                    .WithMessageMovedToDeadLetterQueueOnMaxDeliveryCount(10)
-                    .WithMessageLockDurationInSeconds(30)
-                    .Create();
+                _settings.QueueBuilder(@namespace.Queues.Define(queuName));
             }
         }
     }
