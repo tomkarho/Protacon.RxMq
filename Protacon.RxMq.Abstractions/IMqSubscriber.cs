@@ -4,6 +4,6 @@ namespace Protacon.RxMq.Abstractions
 {
     public interface IMqSubscriber: IDisposable
     {
-        IObservable<Envelope<T>> Messages<T>() where T : IRoutingKey, new();
+        IObservable<Envelope<T>> Messages<T>() where T : new();
     }
 }

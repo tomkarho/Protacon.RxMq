@@ -16,12 +16,10 @@ namespace Protacon.RxMq.AzureServiceBus
         private readonly MqSettings _settings;
         private readonly AzureQueueManagement _queueManagement;
         private readonly ILogger<AzureBusSubscriber> _logging;
-        private readonly Dictionary<Type, IBinding> _bindings = new Dictionary<Type, IBinding>();
+        private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
 
-        private class Binding<T>: IBinding where T: IRoutingKey, new()
+        private class Binding<T>: IDisposable where T: new()
         {
-            public Type Type { get; } = typeof(T);
-
             internal Binding(MqSettings settings, ILogger<AzureBusSubscriber> logging, AzureQueueManagement queueManagement)
             {
                 var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
@@ -80,7 +78,7 @@ namespace Protacon.RxMq.AzureServiceBus
             _logging = logging;
         }
 
-        public IObservable<Envelope<T>> Messages<T>() where T: IRoutingKey, new()
+        public IObservable<Envelope<T>> Messages<T>() where T: new()
         {
             if(!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));

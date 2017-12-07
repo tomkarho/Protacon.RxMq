@@ -16,18 +16,19 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
-        private readonly Dictionary<Type, IBinding> _bindings = new Dictionary<Type, IBinding>();
+        private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
         private readonly MessagingFactory _factory;
         private readonly NamespaceManager _namespaceManager;
 
-        private class Binding<T> : IBinding where T : IRoutingKey, new()
+        private class Binding<T> : IDisposable where T : new()
         {
-            private MessageReceiver _receiver;
+            private readonly MessageReceiver _receiver;
             public Type Type { get; } = typeof(T);
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, Action<string> logMessage, Action<string> logError)
             {
-                var route = new T().RoutingKey;
+                // TODO: Implement dynamic routing.
+                var route = ((IRoutingKey)new T()).RoutingKey;
 
                 _receiver = messagingFactory.CreateMessageReceiver(route, ReceiveMode.PeekLock);
 
@@ -78,7 +79,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                 NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
         }
 
-        public IObservable<Envelope<T>> Messages<T>() where T : IRoutingKey, new()
+        public IObservable<Envelope<T>> Messages<T>() where T : new()
         {
             if (!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _logMessage, _logError));

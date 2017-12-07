@@ -69,7 +69,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 .ToList()
                 .ForEach(x => x.Dispose());
         }
-        public Task SendAsync<T>(T message) where T : IRoutingKey, new()
+        public Task SendAsync<T>(T message) where T : new()
         {
             var queue = _settings.QueueNameBuilderForPublisher(message);
 

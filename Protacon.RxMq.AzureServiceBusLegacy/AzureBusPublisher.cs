@@ -16,11 +16,11 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
-        private readonly Dictionary<Type, IBinding> _bindings = new Dictionary<Type, IBinding>();
+        private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
         private readonly MessagingFactory _factory;
         private readonly NamespaceManager _namespaceManager;
 
-        private class Binding<T> : IBinding where T : IRoutingKey, new()
+        private class Binding<T> : IDisposable where T : new()
         {
             private readonly MessagingFactory _messagingFactory;
             private readonly Action<string> _logMessage;
@@ -35,7 +35,8 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                 _logMessage = logMessage;
                 _logError = logError;
 
-                var route = new T().RoutingKey;
+                // TODO: Implement dynamic routing.
+                var route = ((IRoutingKey)new T()).RoutingKey;
 
                 if (!namespaceManager.QueueExists(route))
                 {
@@ -45,7 +46,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
             public Task SendAsync(T message)
             {
-                var sender = _messagingFactory.CreateMessageSender(new T().RoutingKey);
+                var sender = _messagingFactory.CreateMessageSender(((IRoutingKey)new T()).RoutingKey);
 
                 var body = 
                     JsonConvert.SerializeObject(
@@ -89,7 +90,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                 NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
         }
 
-        public Task SendAsync<T>(T message) where T : IRoutingKey, new()
+        public Task SendAsync<T>(T message) where T : new()
         {
             if (!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _logMessage, _logError));
