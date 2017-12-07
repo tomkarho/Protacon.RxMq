@@ -19,26 +19,26 @@ namespace Protacon.RxMq.AzureServiceBus
         public Func<Type, string> QueueNameBuilderForSubscriber { get; set; } = type =>
         {
             var instance = Activator.CreateInstance(type);
-            
-            if(instance is IRoutingKey)
+
+            if (instance is IQueueItem)
             {
-                return ((IRoutingKey)instance).RoutingKey;
+                return ((IQueueItem)instance).QueueName;
             }
 
-            throw new InvalidOperationException($"Default implementation of route builder expects used objects to extend '{nameof(IRoutingKey)}'");
+            throw new InvalidOperationException($"Default implementation of queue name builder expects used objects to extend '{nameof(IQueueItem)}'");
         };
 
         public Func<object, string> QueueNameBuilderForPublisher { get; set; } = instance =>
         {
-            if (instance is IRoutingKey)
+            if (instance is IQueueItem)
             {
-                return ((IRoutingKey)instance).RoutingKey;
+                return ((IQueueItem)instance).QueueName;
             }
 
-            throw new InvalidOperationException($"Default implementation of route builder expects used objects to extend '{nameof(IRoutingKey)}'");
+            throw new InvalidOperationException($"Default implementation of queue name builder expects used objects to extend '{nameof(IQueueItem)}' or ");
         };
 
-        public Action<IBlank> QueueBuilder { get; set; } = queu =>
+        public Action<IBlank, Type> QueueBuilder { get; set; } = (queu, messageType) =>
         {
             queu
                 .WithSizeInMB(1024)

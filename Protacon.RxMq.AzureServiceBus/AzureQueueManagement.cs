@@ -15,7 +15,7 @@ namespace Protacon.RxMq.AzureServiceBus
             _settings = settings.Value;
         }
 
-        public void CreateIfMissing(string queuName)
+        public void CreateIfMissing(string queuName, Type messageType)
         {
             var azureCredentials = SdkContext.AzureCredentialsFactory
                 .FromServicePrincipal(
@@ -34,7 +34,7 @@ namespace Protacon.RxMq.AzureServiceBus
             var queue = @namespace.Queues.List().FirstOrDefault(x => x.Name == queuName);
             if (queue == null)
             {
-                _settings.QueueBuilder(@namespace.Queues.Define(queuName));
+                _settings.QueueBuilder(@namespace.Queues.Define(queuName), messageType);
             }
         }
     }

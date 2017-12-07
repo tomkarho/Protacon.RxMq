@@ -24,7 +24,7 @@ namespace Protacon.RxMq.AzureServiceBus
             {
                 var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
 
-                queueManagement.CreateIfMissing(queueName);
+                queueManagement.CreateIfMissing(queueName, typeof(T));
 
                 var queueClient = new QueueClient(settings.ConnectionString, queueName);
 

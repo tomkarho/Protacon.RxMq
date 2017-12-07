@@ -23,7 +23,6 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
         private class Binding<T> : IDisposable where T : new()
         {
             private readonly MessageReceiver _receiver;
-            public Type Type { get; } = typeof(T);
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, Action<string> logMessage, Action<string> logError)
             {

@@ -23,14 +23,13 @@ namespace Protacon.RxMq.AzureServiceBus
         {
             private readonly QueueClient _queueClient;
 
-            internal Binding(MqSettings settings, ILogger<AzureBusPublisher> logging, AzureQueueManagement queueManagement, string queue)
+            internal Binding(MqSettings settings, ILogger<AzureBusPublisher> logging, AzureQueueManagement queueManagement, string queue, Type type)
             {
-                queueManagement.CreateIfMissing(queue);
+                queueManagement.CreateIfMissing(queue, type);
+
                 _queueClient = new QueueClient(settings.ConnectionString, queue);
 
                 logging.LogDebug($"Created new MQ binding '{queue}'.");
-
-                queueManagement.CreateIfMissing(queue);
             }
 
             public Task SendAsync(object message)
@@ -74,7 +73,7 @@ namespace Protacon.RxMq.AzureServiceBus
             var queue = _settings.QueueNameBuilderForPublisher(message);
 
             if (!_bindings.ContainsKey(queue))
-                _bindings.Add(queue, new Binding(_settings, _logging, _queueManagement, queue));
+                _bindings.Add(queue, new Binding(_settings, _logging, _queueManagement, queue, typeof(T)));
 
             _logging.LogDebug($"Sending message to queue '{message}'");
 
