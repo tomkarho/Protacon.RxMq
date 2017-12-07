@@ -73,7 +73,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             {
                 if (x is TestMessage m)
                 {
-                    return m.RoutingKey + "_" + m.TenantId;
+                    return m.QueueName + "_" + m.TenantId;
                 }
                 throw new InvalidOperationException();
             };
@@ -84,7 +84,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
                 if (instance is TestMessage m)
                 {
-                    return m.RoutingKey + "_" + tenant2;
+                    return m.QueueName + "_" + tenant2;
                 }
                 throw new InvalidOperationException();
             };
