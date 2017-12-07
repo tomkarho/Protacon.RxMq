@@ -23,7 +23,7 @@ namespace Protacon.RxMq.AzureServiceBus
 
             internal Binding(MqSettings settings, ILogger<AzureBusSubscriber> logging)
             {
-                var route = new T().RoutingKey;
+                var route = settings.RouteBuilderForSubscriber(typeof(T));
 
                 var queueClient = new QueueClient(settings.ConnectionString, route);
 
@@ -59,7 +59,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 if (parsed["data"] == null)
                     throw new InvalidOperationException("Library expects data wrapped as { data: { ... } }");
 
-                return parsed.ToObject<T>();
+                return parsed["data"].ToObject<T>();
             }
 
             public Subject<Envelope<T>> Subject { get; } = new Subject<Envelope<T>>();

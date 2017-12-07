@@ -1,12 +1,32 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Protacon.RxMq.AzureServiceBus.Tests
 {
     public static class TestSettings
     {
-        public static IOptions<MqSettings> MqSettings => Options.Create(new MqSettings()
+        public static IOptions<MqSettings> MqSettingsOptions() => Options.Create(MqSettings());
+
+        public static MqSettings MqSettings()
         {
-            ConnectionString = "Endpoint=sb://rxmq-test.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=3h/VM8lOzs3D5M5qvz8NMlAwDPk4wqeLOF6IGX9GD8U="
-        });
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("client-secrets.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            return new MqSettings
+            {
+                ConnectionString = config.GetConfig("ConnectionString"),
+                AzureSpAppId = config.GetConfig("AzureSpAppId"),
+                AzureSpPassword = config.GetConfig("AzureSpPassword"),
+                AzureSpTenantId = config.GetConfig("AzureSpTenantId")
+            };
+        }
+
+        private static string GetConfig(this IConfigurationRoot root, string name)
+        {
+            return root[name] ?? throw new InvalidOperationException(name);
+        }
     }
 }

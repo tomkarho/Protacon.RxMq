@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
@@ -16,6 +15,7 @@ namespace Protacon.RxMq.AzureServiceBus
     public class AzureBusPublisher: IMqPublisher
     {
         private readonly MqSettings _settings;
+        private readonly AzureQueueManagement _queueManagement;
         private readonly ILogger<AzureBusPublisher> _logging;
         private readonly Dictionary<Type, IBinding> _bindings = new Dictionary<Type, IBinding>();
 
@@ -25,12 +25,15 @@ namespace Protacon.RxMq.AzureServiceBus
             private readonly QueueClient _queueClient;
             public Type Type { get; } = typeof(T);
 
-            internal Binding(MqSettings settings, ILogger<AzureBusPublisher> logging)
+            internal Binding(MqSettings settings, ILogger<AzureBusPublisher> logging, AzureQueueManagement queueManagement)
             {
                 _logging = logging;
 
-                var route = new T().RoutingKey;
+                // TODO: implement this correctly, caching should be type + route key.
+                var route = settings.RouteBuilderForPublisher(Activator.CreateInstance(typeof(T)));
                 _queueClient = new QueueClient(settings.ConnectionString, route);
+
+                queueManagement.Create(route);
             }
 
             public Task SendAsync(T message)
@@ -55,9 +58,10 @@ namespace Protacon.RxMq.AzureServiceBus
             }
         }
 
-        public AzureBusPublisher(IOptions<MqSettings> settings, ILogger<AzureBusPublisher> logging)
+        public AzureBusPublisher(IOptions<MqSettings> settings, AzureQueueManagement queueManagement, ILogger<AzureBusPublisher> logging)
         {
             _settings = settings.Value;
+            _queueManagement = queueManagement;
             _logging = logging;
         }
 
@@ -67,16 +71,10 @@ namespace Protacon.RxMq.AzureServiceBus
                 .ToList()
                 .ForEach(x => x.Dispose());
         }
-
-        public IObservable<Envelope<T>> SendRpc<T>(T message) where T : IRoutingKey, new()
-        {
-            throw new NotImplementedException();
-        }
-
         public Task SendAsync<T>(T message) where T : IRoutingKey, new()
         {
             if (!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging));
+                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));
 
             return ((Binding<T>)_bindings[typeof(T)]).SendAsync(message);
         }

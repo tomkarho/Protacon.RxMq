@@ -25,6 +25,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             private readonly MessagingFactory _messagingFactory;
             private readonly Action<string> _logMessage;
             private readonly Action<string> _logError;
+
             public Type Type { get; } = typeof(T);
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager,
@@ -86,11 +87,6 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
             _namespaceManager =
                 NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
-        }
-
-        public IObservable<Envelope<T>> SendRpc<T>(T message) where T : IRoutingKey, new()
-        {
-            throw new NotImplementedException();
         }
 
         public Task SendAsync<T>(T message) where T : IRoutingKey, new()

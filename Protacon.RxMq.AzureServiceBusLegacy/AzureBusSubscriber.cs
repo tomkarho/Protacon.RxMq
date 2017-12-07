@@ -50,7 +50,6 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
                             Subject.OnNext(new Envelope<T>(JObject.Parse(body)["data"].ToObject<T>(),
                                 new MessageAckAzureServiceBus(message)));
-                            message.Complete();
                         }
                     }
                     catch (Exception ex)

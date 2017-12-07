@@ -12,5 +12,6 @@ namespace Protacon.RxMq.AzureServiceBus.Tests.Messages
 
         public string RoutingKey { get; private set; } = "testmessages";
         public Guid ExampleId { get; set; }
+        public string Something { get; set; }
     }
 }

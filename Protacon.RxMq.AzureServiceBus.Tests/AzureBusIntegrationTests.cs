@@ -13,8 +13,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         [Fact]
         public void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var subscriber = new AzureBusSubscriber(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusSubscriber>>());
-            var publisher = new AzureBusPublisher(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusPublisher>>());
+            var subscriber = new AzureBusSubscriber(TestSettings.MqSettingsOptions(), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureBusPublisher(TestSettings.MqSettingsOptions(), new AzureQueueManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusPublisher>>());
 
             var id = Guid.NewGuid();
 
@@ -28,15 +28,37 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .Timeout(TimeSpan.FromSeconds(5));
         }
 
-        [Fact(Skip = "TODO: This is actually kind of hard requirement to fullfill with current state of library. https://github.com/Azure/azure-service-bus-dotnet/issues/65")]
-        public void WhenQueueDoesntExistYet_ThenCreateNew()
+        [Fact]
+        public async void WhenQueueDoesntExistYet_ThenCreateNew()
         {
-            var publisher = new AzureBusPublisher(TestSettings.MqSettings, Substitute.For<ILogger<AzureBusPublisher>>());
+            // Arrange.
+            var testQueueName = $"testque_{Guid.NewGuid()}";
 
-            OverridableQueueForTestingMessage.RoutingKeyOverride = $"queuegeneratortest_{Guid.NewGuid()}";
-            var message = new OverridableQueueForTestingMessage();
+            var settings = TestSettings.MqSettingsOptions();
 
-            publisher.Invoking(x => x.SendAsync(message).Wait()).Should().NotThrow<Exception>();
+            settings.Value.RouteBuilderForPublisher = _ => testQueueName;
+            settings.Value.RouteBuilderForSubscriber = _ => testQueueName;
+
+            var publisher = new AzureBusPublisher(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
+            var receiver = new AzureBusSubscriber(settings, Substitute.For<ILogger<AzureBusSubscriber>>());
+
+            var message = new TestMessage
+            {
+                ExampleId = Guid.NewGuid(),
+                Something = "abc"
+            };
+
+            // Act.
+            publisher
+                .Invoking(x => x.SendAsync(message).Wait())
+                .Should().NotThrow<Exception>();
+
+            // Assert.
+            var result = await receiver.Messages<TestMessage>()
+                .Timeout(TimeSpan.FromSeconds(20))
+                .FirstAsync();
+
+            result.Message.ExampleId.Should().Be(message.ExampleId);
         }
     }
 }
