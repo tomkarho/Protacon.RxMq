@@ -13,6 +13,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 {
     public class AzureBusSubscriber: IMqSubscriber
     {
+        private readonly MqSettings _settings;
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
@@ -24,16 +25,16 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
         {
             private readonly MessageReceiver _receiver;
 
-            internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, Action<string> logMessage, Action<string> logError)
+            internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, MqSettings settings, Action<string> logMessage, Action<string> logError)
             {
-                // TODO: Implement dynamic routing.
-                var route = ((IRoutingKey)new T()).RoutingKey;
+                var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
 
-                _receiver = messagingFactory.CreateMessageReceiver(route, ReceiveMode.PeekLock);
+                _receiver = messagingFactory.CreateMessageReceiver(queueName, ReceiveMode.PeekLock);
 
-                if (!namespaceManager.QueueExists(route))
+                if (!namespaceManager.QueueExists(queueName))
                 {
-                    namespaceManager.CreateQueue(route);
+                    var queueDescription = new QueueDescription(queueName);
+                    namespaceManager.CreateQueue(settings.QueueBuilderConfig(queueDescription, typeof(T)));
                 }
 
                 _receiver.OnMessage(message =>
@@ -46,7 +47,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                         {
                             var body = reader.ReadToEnd();
 
-                            logMessage($"Received '{route}': {body}");
+                            logMessage($"Received '{queueName}': {body}");
 
                             Subject.OnNext(new Envelope<T>(JObject.Parse(body)["data"].ToObject<T>(),
                                 new MessageAckAzureServiceBus(message)));
@@ -54,7 +55,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                     }
                     catch (Exception ex)
                     {
-                        logError($"Message {route}': {message} -> consumer error: {ex}");
+                        logError($"Message {queueName}': {message} -> consumer error: {ex}");
                     }
                 }, new OnMessageOptions { AutoComplete = true });
             }
@@ -70,6 +71,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
         public AzureBusSubscriber(MqSettings settings, Action<string> logMessage, Action<string> logError)
         {
+            _settings = settings;
             _logMessage = logMessage;
             _logError = logError;
             _factory = MessagingFactory.CreateFromConnectionString(settings.ConnectionString);
@@ -81,7 +83,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
         public IObservable<Envelope<T>> Messages<T>() where T : new()
         {
             if (!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _logMessage, _logError));
+                _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _settings, _logMessage, _logError));
 
             return ((Binding<T>)_bindings[typeof(T)]).Subject;
         }

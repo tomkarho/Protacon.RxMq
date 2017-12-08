@@ -13,10 +13,11 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 {
     public class AzureBusPublisher : IMqPublisher
     {
+        private readonly MqSettings _settings;
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
-        private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
+        private readonly Dictionary<string, IDisposable> _bindings = new Dictionary<string, IDisposable>();
         private readonly MessagingFactory _factory;
         private readonly NamespaceManager _namespaceManager;
 
@@ -26,27 +27,27 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             private readonly Action<string> _logMessage;
             private readonly Action<string> _logError;
 
-            public Type Type { get; } = typeof(T);
-
-            internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager,
+            internal Binding(
+                MessagingFactory messagingFactory, 
+                NamespaceManager namespaceManager,
+                MqSettings settings,
+                string queueName,
                 Action<string> logMessage, Action<string> logError)
             {
                 _messagingFactory = messagingFactory;
                 _logMessage = logMessage;
                 _logError = logError;
 
-                // TODO: Implement dynamic routing.
-                var route = ((IRoutingKey)new T()).RoutingKey;
-
-                if (!namespaceManager.QueueExists(route))
+                if (!namespaceManager.QueueExists(queueName))
                 {
-                    namespaceManager.CreateQueue(route);
+                    var queueDescription = new QueueDescription(queueName);
+                    namespaceManager.CreateQueue(settings.QueueBuilderConfig(queueDescription, typeof(T)));
                 }
             }
 
-            public Task SendAsync(T message)
+            public Task SendAsync(T message, string queueName)
             {
-                var sender = _messagingFactory.CreateMessageSender(((IRoutingKey)new T()).RoutingKey);
+                var sender = _messagingFactory.CreateMessageSender(queueName);
 
                 var body = 
                     JsonConvert.SerializeObject(
@@ -82,6 +83,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
         public AzureBusPublisher(MqSettings settings, Action<string> logMessage, Action<string> logError)
         {
+            _settings = settings;
             _logMessage = logMessage;
             _logError = logError;
             _factory = MessagingFactory.CreateFromConnectionString(settings.ConnectionString);
@@ -92,10 +94,13 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
         public Task SendAsync<T>(T message) where T : new()
         {
-            if (!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _logMessage, _logError));
+            var queueName = _settings.QueueNameBuilderForPublisher(message);
 
-            return ((Binding<T>) _bindings[typeof(T)]).SendAsync(message);
+            if (!_bindings.ContainsKey(queueName))
+                _bindings.Add(queueName, new Binding<T>(_factory, _namespaceManager, _settings, queueName
+                    , _logMessage, _logError));
+
+            return ((Binding<T>) _bindings[queueName]).SendAsync(message, queueName);
         }
     }
 }

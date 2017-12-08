@@ -3,14 +3,9 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBusLegacy.Tests.Messages
 {
-    public class TestMessage: IRoutingKey
+    public class TestMessage: IQueueItem
     {
-        public void SetNewRoutingKeyForTesting(string routingKey)
-        {
-            RoutingKey = routingKey;
-        }
-
-        public string RoutingKey { get; private set; } = "testmessages";
         public Guid ExampleId { get; set; }
+        public string QueueName { get; } = "testmessages";
     }
 }

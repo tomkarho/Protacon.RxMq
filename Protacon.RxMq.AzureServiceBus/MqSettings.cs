@@ -42,6 +42,7 @@ namespace Protacon.RxMq.AzureServiceBus
         {
             queu
                 .WithSizeInMB(1024)
+                .WithDefaultMessageTTL(TimeSpan.FromHours(1))
                 .WithMessageMovedToDeadLetterQueueOnMaxDeliveryCount(10)
                 .WithMessageLockDurationInSeconds(30)
                 .Create();
