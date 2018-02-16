@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Subjects;
@@ -11,45 +11,44 @@ using Microsoft.Extensions.Options;
 
 namespace Protacon.RxMq.AzureServiceBus
 {
-    public class AzureBusSubscriber: IMqQueSubscriber
+    public class AzureTopicSubscriber: IMqTopicSubscriber
     {
-        private readonly MqSettings _settings;
-        private readonly AzureRxMqManagement _queueManagement;
-        private readonly ILogger<AzureBusSubscriber> _logging;
+        private readonly AzureBusTopicSettings _settings;
+        private readonly AzureBusTopicManagement _queueManagement;
+        private readonly ILogger<AzureTopicSubscriber> _logging;
         private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
 
         private class Binding<T>: IDisposable where T: new()
         {
-            internal Binding(MqSettings settings, ILogger<AzureBusSubscriber> logging, AzureRxMqManagement queueManagement)
+            internal Binding(AzureBusTopicSettings settings, ILogger<AzureTopicSubscriber> logging, AzureBusTopicManagement queueManagement)
             {
-                var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
+                var topicName = settings.TopicNameBuilderForSubscriber(typeof(T));
+                var subscriptionName = $"{topicName}.{settings.TopicSubscriberId}";
 
-                queueManagement.CreateQueIfMissing(queueName, typeof(T));
+                queueManagement.CreateSubscriptionIfMissing(topicName, subscriptionName, typeof(T));
 
-                var queueClient = new QueueClient(settings.ConnectionString, queueName);
+                var subscriptionClient = new SubscriptionClient(settings.ConnectionString, topicName, subscriptionName);
 
-                queueClient.RegisterMessageHandler(
+                subscriptionClient.RegisterMessageHandler(
                     async (message, _) =>
                     {
                         try
                         {
                             var body = Encoding.UTF8.GetString(message.Body);
 
-                            logging.LogInformation($"Received '{queueName}': {body}");
+                            logging.LogInformation($"Received '{subscriptionName}': {body}");
 
                             var asObject = AsObject(body);
 
-                            Subject.OnNext(
-                                new Envelope<T>(asObject,
-                                new MessageAckAzureServiceBus(queueClient, message.SystemProperties.LockToken)));
+                            Subject.OnNext(asObject);
                         }
                         catch (Exception ex)
                         {
-                            logging.LogError($"Message {queueName}': {message} -> consumer error: {ex}");
+                            logging.LogError($"Message {subscriptionName}': {message} -> consumer error: {ex}");
                         }
                     }, new MessageHandlerOptions(async e =>
                     {
-                        logging.LogError($"At route '{queueName}' error occurred: {e.Exception}");
+                        logging.LogError($"At route '{subscriptionName}' error occurred: {e.Exception}");
                     }));
             }
 
@@ -63,7 +62,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 return parsed["data"].ToObject<T>();
             }
 
-            public Subject<Envelope<T>> Subject { get; } = new Subject<Envelope<T>>();
+            public Subject<T> Subject { get; } = new Subject<T>();
 
             public void Dispose()
             {
@@ -71,14 +70,14 @@ namespace Protacon.RxMq.AzureServiceBus
             }
         }
 
-        public AzureBusSubscriber(IOptions<MqSettings> settings, AzureRxMqManagement queueManagement, ILogger<AzureBusSubscriber> logging)
+        public AzureTopicSubscriber(IOptions<AzureBusTopicSettings> settings, AzureBusTopicManagement queueManagement, ILogger<AzureTopicSubscriber> logging)
         {
             _settings = settings.Value;
             _queueManagement = queueManagement;
             _logging = logging;
         }
 
-        public IObservable<Envelope<T>> Messages<T>() where T: new()
+        public IObservable<T> Messages<T>() where T: new()
         {
             if(!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));

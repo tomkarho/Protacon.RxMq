@@ -13,8 +13,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         [Fact]
         public void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var subscriber = new AzureBusSubscriber(TestSettings.MqSettingsOptions(), new AzureRxMqManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusSubscriber>>());
-            var publisher = new AzureBusPublisher(TestSettings.MqSettingsOptions(), new AzureRxMqManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusPublisher>>());
+            var subscriber = new AzureQueueSubscriber(TestSettings.QueueSettingsOptions(), new AzureBusQueueManagement(TestSettings.QueueSettingsOptions()), Substitute.For<ILogger<AzureQueueSubscriber>>());
+            var publisher = new AzureQueuePublisher(TestSettings.QueueSettingsOptions(), new AzureBusQueueManagement(TestSettings.QueueSettingsOptions()), Substitute.For<ILogger<AzureQueuePublisher>>());
 
             var id = Guid.NewGuid();
 
@@ -34,13 +34,13 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             // Arrange.
             var testQueueName = $"testque_{Guid.NewGuid()}";
 
-            var settings = TestSettings.MqSettingsOptions();
+            var settings = TestSettings.QueueSettingsOptions();
 
             settings.Value.QueueNameBuilderForPublisher = _ => testQueueName;
             settings.Value.QueueNameBuilderForSubscriber = _ => testQueueName;
 
-            var publisher = new AzureBusPublisher(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
-            var receiver = new AzureBusSubscriber(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureQueuePublisher(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueuePublisher>>());
+            var receiver = new AzureQueueSubscriber(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueueSubscriber>>());
 
             var message = new TestMessage
             {
@@ -67,7 +67,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             var tenant2 = Guid.NewGuid();
 
             // Arrange.
-            var settings = TestSettings.MqSettingsOptions();
+            var settings = TestSettings.QueueSettingsOptions();
 
             settings.Value.QueueNameBuilderForPublisher = x =>
             {
@@ -89,8 +89,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 throw new InvalidOperationException();
             };
 
-            var publisher = new AzureBusPublisher(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
-            var receiver = new AzureBusSubscriber(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureQueuePublisher(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueuePublisher>>());
+            var receiver = new AzureQueueSubscriber(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueueSubscriber>>());
 
             var message = new TestMessage
             {

@@ -14,8 +14,8 @@ namespace Protacon.RxMq.AzureServiceBus
 {
     public class AzureTopicPublisher: IMqTopicPublisher
     {
-        private readonly MqSettings _settings;
-        private readonly AzureRxMqManagement _queueManagement;
+        private readonly AzureBusTopicSettings _settings;
+        private readonly AzureBusTopicManagement _queueManagement;
         private readonly ILogger<AzureTopicPublisher> _logger;
         private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
 
@@ -23,11 +23,11 @@ namespace Protacon.RxMq.AzureServiceBus
         {
             private readonly TopicClient _queueClient;
             private readonly ILogger<AzureTopicPublisher> _logger;
+            private readonly AzureBusTopicSettings _settings;
 
             internal Binding(
-                MqSettings settings,
-                ILogger<AzureTopicPublisher> logging,
-                AzureRxMqManagement queueManagement,
+                AzureBusTopicSettings settings,
+                AzureBusTopicManagement queueManagement,
                 string queue,
                 Type type,
                 ILogger<AzureTopicPublisher> logger)
@@ -36,8 +36,9 @@ namespace Protacon.RxMq.AzureServiceBus
 
                 _queueClient = new TopicClient(settings.ConnectionString, queue);
 
-                logging.LogDebug($"Created new MQ binding '{queue}'.");
+                logger.LogInformation($"Created new MQ binding '{queue}'.");
                 _logger = logger;
+                _settings = settings;
             }
 
             public Task SendAsync(object message)
@@ -54,7 +55,13 @@ namespace Protacon.RxMq.AzureServiceBus
 
                 var contentJsonBytes = Encoding.UTF8.GetBytes(asJson);
 
-                var body = new Message(contentJsonBytes) { ContentType = "application/json" };
+                var body = new Message(contentJsonBytes) {
+                    ContentType = "application/json",
+                };
+
+                _settings.AzureMessagePropertyBuilder(message)
+                    .ToList()
+                    .ForEach(body.UserProperties.Add);
 
                 return _queueClient.SendAsync(body);
             }
@@ -65,7 +72,7 @@ namespace Protacon.RxMq.AzureServiceBus
             }
         }
 
-        public AzureTopicPublisher(IOptions<MqSettings> settings, AzureRxMqManagement queueManagement, ILogger<AzureTopicPublisher> logging)
+        public AzureTopicPublisher(IOptions<AzureBusTopicSettings> settings, AzureBusTopicManagement queueManagement, ILogger<AzureTopicPublisher> logging)
         {
             _settings = settings.Value;
             _queueManagement = queueManagement;
@@ -83,7 +90,7 @@ namespace Protacon.RxMq.AzureServiceBus
             var queue = _settings.TopicNameBuilderForPublisher(message);
 
             if (!_bindings.ContainsKey(queue))
-                _bindings.Add(queue, new Binding(_settings, _logger, _queueManagement, queue, typeof(T), _logger));
+                _bindings.Add(queue, new Binding(_settings, _queueManagement, queue, typeof(T), _logger));
 
             return _bindings[queue].SendAsync(message);
         }

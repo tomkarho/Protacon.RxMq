@@ -6,27 +6,58 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 {
     public static class TestSettings
     {
-        public static IOptions<MqSettings> MqSettingsOptions() => Options.Create(MqSettings());
+        public static IOptions<AzureBusQueueSettings> QueueSettingsOptions(Action<AzureBusQueueSettings> updates = null)
+        {
+            var settings = MqSettings();
 
-        public static MqSettings MqSettings()
+            if(updates != null)
+                updates.Invoke(settings);
+
+            return Options.Create(settings);
+        }
+
+        public static IOptions<AzureBusTopicSettings> TopicSettingsOptions(Action<AzureBusTopicSettings> updates = null)
+        {
+            var settings = MqTopicSettings();
+
+            if(updates != null)
+                updates.Invoke(settings);
+
+            return Options.Create(settings);
+        }
+
+        public static AzureBusQueueSettings MqSettings()
+        {
+            var config = new AzureBusQueueSettings();
+            LoadCommonSettings(config);
+            return config;
+        }
+
+        public static AzureBusTopicSettings MqTopicSettings()
+        {
+            var config = new AzureBusTopicSettings
+            {
+                // This makes running machine looks like unique on every test.
+                TopicSubscriberId = Guid.NewGuid().ToString()
+            };
+            LoadCommonSettings(config);
+            return config;
+        }
+
+        private static void LoadCommonSettings(AzureMqSettingsBase baseConfig)
         {
             var config = new ConfigurationBuilder()
                 .AddJsonFile("client-secrets.json", optional: true)
                 .AddEnvironmentVariables()
                 .Build();
 
-            return new MqSettings
-            {
-                ConnectionString = config.GetConfig("ConnectionString"),
-                AzureSpAppId = config.GetConfig("AzureSpAppId"),
-                AzureSpPassword = config.GetConfig("AzureSpPassword"),
-                AzureSpTenantId = config.GetConfig("AzureSpTenantId"),
-                AzureNamespace = config.GetConfig("AzureNamespace"),
-                AzureResourceGroup = config.GetConfig("AzureResourceGroup"),
-                AzureSubscriptionId = config.GetConfig("AzureSubscriptionId"),
-                // This makes running machine looks like unique on every test.
-                AppDeploymentId = Guid.NewGuid().ToString()
-            };
+                baseConfig.ConnectionString = config.GetConfig("ConnectionString");
+                baseConfig.AzureSpAppId = config.GetConfig("AzureSpAppId");
+                baseConfig.AzureSpPassword = config.GetConfig("AzureSpPassword");
+                baseConfig.AzureSpTenantId = config.GetConfig("AzureSpTenantId");
+                baseConfig.AzureNamespace = config.GetConfig("AzureNamespace");
+                baseConfig.AzureResourceGroup = config.GetConfig("AzureResourceGroup");
+                baseConfig.AzureSubscriptionId = config.GetConfig("AzureSubscriptionId");
         }
 
         private static string GetConfig(this IConfigurationRoot root, string name)
