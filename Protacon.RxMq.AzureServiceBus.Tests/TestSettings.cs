@@ -23,7 +23,9 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 AzureSpTenantId = config.GetConfig("AzureSpTenantId"),
                 AzureNamespace = config.GetConfig("AzureNamespace"),
                 AzureResourceGroup = config.GetConfig("AzureResourceGroup"),
-                AzureSubscriptionId = config.GetConfig("AzureSubscriptionId")
+                AzureSubscriptionId = config.GetConfig("AzureSubscriptionId"),
+                // This makes running machine looks like unique on every test.
+                AppDeploymentId = Guid.NewGuid().ToString()
             };
         }
 

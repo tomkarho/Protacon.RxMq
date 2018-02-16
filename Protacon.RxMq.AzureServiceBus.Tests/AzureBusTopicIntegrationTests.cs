@@ -13,8 +13,9 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         [Fact]
         public void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var subscriber = new AzureTopicSubscriber(TestSettings.MqSettingsOptions(), new AzureRxMqManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusSubscriber>>());
-            var publisher = new AzureTopicPublisher(TestSettings.MqSettingsOptions(), new AzureRxMqManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureTopicPublisher>>());
+            var settings = TestSettings.MqSettingsOptions();
+            var subscriber = new AzureTopicSubscriber(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureTopicPublisher(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
 
             var id = Guid.NewGuid();
 
