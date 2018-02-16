@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reactive.Linq;
 using FluentAssertions;
 using Microsoft.Azure.ServiceBus;
@@ -12,7 +13,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
     public class AzureBusTopicIntegrationTests
     {
         [Fact]
-        public void WhenMessageIsSend_ThenItCanBeReceived()
+        public async void WhenMessageIsSend_ThenItCanBeReceived()
         {
             var settings = TestSettings.TopicSettingsOptions();
             var subscriber = new AzureTopicSubscriber(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicSubscriber>>());
@@ -22,23 +23,35 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             publisher.SendAsync(new TestMessageForTopic
             {
-                ExampleId = Guid.NewGuid()
+                ExampleId = id
             }).Wait();
 
-            subscriber.Messages<TestMessageForTopic>()
+            await subscriber.Messages<TestMessageForTopic>()
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5));
+                .Timeout(TimeSpan.FromSeconds(5))
+                .FirstAsync();
         }
 
         [Fact]
-        public void WhenFiltersAreSet_Then()
+        public async void WhenFiltersAreSet_Then()
         {
-            var settings = TestSettings.TopicSettingsOptions();
+            var correctTenantId = Guid.NewGuid();
+            var invalidTenantId = Guid.NewGuid();
+
+            var settings = TestSettings.TopicSettingsOptions(s => {
+                s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", correctTenantId } };
+                s.AzureSubscriptionFilters.Add("filter", new SqlFilter($"tenant = '{correctTenantId}'"));
+            });
+
             var publisher = new AzureTopicPublisher(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
             var subscriber = new AzureTopicSubscriber(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicSubscriber>>());
 
-            var settingsNonMatching = TestSettings.TopicSettingsOptions(s => s.AzureSubscriptionFilters.Add("filter", new SqlFilter("")));
-            var nonMatchingSubscriber = new AzureTopicSubscriber(settingsNonMatching, new AzureBusTopicManagement(settingsNonMatching), Substitute.For<ILogger<AzureTopicSubscriber>>());
+            var invalidTenantSettings = TestSettings.TopicSettingsOptions(s => {
+                s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", invalidTenantId } };
+                s.AzureSubscriptionFilters.Add("filter", new SqlFilter($"tenant = '{correctTenantId}'"));
+            });
+
+            var invalidSubscriber = new AzureTopicSubscriber(invalidTenantSettings, new AzureBusTopicManagement(invalidTenantSettings), Substitute.For<ILogger<AzureTopicSubscriber>>());
 
             var id = Guid.NewGuid();
 
@@ -47,9 +60,15 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 ExampleId = Guid.NewGuid()
             }).Wait();
 
-            subscriber.Messages<TestMessageForTopic>()
+            await subscriber.Messages<TestMessageForTopic>()
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5));
+                .Timeout(TimeSpan.FromSeconds(5))
+                .FirstAsync();
+
+            await subscriber.Messages<TestMessageForTopic>()
+                .Where(x => x.ExampleId == id)
+                .Timeout(TimeSpan.FromSeconds(5))
+                .FirstAsync();
         }
     }
 }

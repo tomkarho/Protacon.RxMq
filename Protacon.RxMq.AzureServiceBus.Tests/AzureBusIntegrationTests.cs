@@ -11,7 +11,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
     public class AzureBusIntegrationTests
     {
         [Fact]
-        public void WhenMessageIsSend_ThenItCanBeReceived()
+        public async void WhenMessageIsSend_ThenItCanBeReceived()
         {
             var subscriber = new AzureQueueSubscriber(TestSettings.QueueSettingsOptions(), new AzureBusQueueManagement(TestSettings.QueueSettingsOptions()), Substitute.For<ILogger<AzureQueueSubscriber>>());
             var publisher = new AzureQueuePublisher(TestSettings.QueueSettingsOptions(), new AzureBusQueueManagement(TestSettings.QueueSettingsOptions()), Substitute.For<ILogger<AzureQueuePublisher>>());
@@ -20,12 +20,13 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             publisher.SendAsync(new TestMessage
             {
-                ExampleId = Guid.NewGuid()
+                ExampleId = id
             }).Wait();
 
-            subscriber.Messages<TestMessage>()
+            await subscriber.Messages<TestMessage>()
                 .Where(x => x.Message.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5));
+                .Timeout(TimeSpan.FromSeconds(5))
+                .FirstAsync();
         }
 
         [Fact]
