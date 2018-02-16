@@ -24,5 +24,4 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             };
         }
     }
-    }
 }

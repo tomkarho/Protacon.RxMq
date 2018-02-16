@@ -11,8 +11,8 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
         [Fact]
         public async void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var subscriber = new AzureBusSubscriber(TestSettings.MqSettings, _ => { }, _ => { });
-            var publisher = new AzureBusPublisher(TestSettings.MqSettings, _ => { }, _ => { });
+            var subscriber = new AzureBusSubscriber(TestSettings.MqSettings(), _ => { }, _ => { });
+            var publisher = new AzureBusPublisher(TestSettings.MqSettings(), _ => { }, _ => { });
 
             var id = Guid.NewGuid();
 
@@ -31,7 +31,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
         [Fact]
         public async void WhenQueueDoesntExistYet_ThenCreateNew()
         {
-            var settings = TestSettings.MqSettings;
+            var settings = TestSettings.MqSettings();
 
             var newQueueName = $"testquelegacy_{Guid.NewGuid()}";
 
