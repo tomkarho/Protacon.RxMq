@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Protacon.RxMq.AzureServiceBusLegacy
 {
-    public class AzureBusSubscriber: IMqSubscriber
+    public class AzureBusSubscriber: IMqQueSubscriber
     {
         private readonly MqSettings _settings;
         private readonly Action<string> _logMessage;

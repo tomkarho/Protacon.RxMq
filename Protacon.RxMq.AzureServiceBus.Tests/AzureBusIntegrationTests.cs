@@ -13,8 +13,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         [Fact]
         public void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var subscriber = new AzureBusSubscriber(TestSettings.MqSettingsOptions(), new AzureQueueManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusSubscriber>>());
-            var publisher = new AzureBusPublisher(TestSettings.MqSettingsOptions(), new AzureQueueManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusPublisher>>());
+            var subscriber = new AzureBusSubscriber(TestSettings.MqSettingsOptions(), new AzureRxMqManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureBusPublisher(TestSettings.MqSettingsOptions(), new AzureRxMqManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusPublisher>>());
 
             var id = Guid.NewGuid();
 
@@ -39,8 +39,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             settings.Value.QueueNameBuilderForPublisher = _ => testQueueName;
             settings.Value.QueueNameBuilderForSubscriber = _ => testQueueName;
 
-            var publisher = new AzureBusPublisher(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
-            var receiver = new AzureBusSubscriber(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureBusPublisher(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
+            var receiver = new AzureBusSubscriber(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
 
             var message = new TestMessage
             {
@@ -89,8 +89,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 throw new InvalidOperationException();
             };
 
-            var publisher = new AzureBusPublisher(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
-            var receiver = new AzureBusSubscriber(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureBusPublisher(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
+            var receiver = new AzureBusSubscriber(settings, new AzureRxMqManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
 
             var message = new TestMessage
             {

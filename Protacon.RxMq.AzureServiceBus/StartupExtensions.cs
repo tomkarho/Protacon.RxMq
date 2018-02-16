@@ -9,9 +9,9 @@ namespace Protacon.RxMq.AzureServiceBus
         public static IServiceCollection AddAzureBusMq(this IServiceCollection services, Action<MqSettings> configure)
         {
             services.Configure(configure);
-            services.AddTransient<AzureQueueManagement>();
-            services.AddSingleton<IMqSubscriber, AzureBusSubscriber>();
-            services.AddSingleton<IMqPublisher, AzureBusPublisher>();
+            services.AddTransient<AzureRxMqManagement>();
+            services.AddSingleton<IMqQueSubscriber, AzureBusSubscriber>();
+            services.AddSingleton<IMqQuePublisher, AzureBusPublisher>();
             return services;
         }
     }

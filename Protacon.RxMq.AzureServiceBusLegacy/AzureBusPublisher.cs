@@ -11,7 +11,7 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBusLegacy
 {
-    public class AzureBusPublisher : IMqPublisher
+    public class AzureBusPublisher : IMqQuePublisher
     {
         private readonly MqSettings _settings;
         private readonly Action<string> _logMessage;
@@ -28,7 +28,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             private readonly Action<string> _logError;
 
             internal Binding(
-                MessagingFactory messagingFactory, 
+                MessagingFactory messagingFactory,
                 NamespaceManager namespaceManager,
                 MqSettings settings,
                 string queueName,

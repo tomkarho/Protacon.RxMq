@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,29 +12,29 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBus
 {
-    public class AzureBusPublisher: IMqQuePublisher
+    public class AzureTopicPublisher: IMqTopicPublisher
     {
         private readonly MqSettings _settings;
         private readonly AzureRxMqManagement _queueManagement;
-        private readonly ILogger<AzureBusPublisher> _logger;
+        private readonly ILogger<AzureTopicPublisher> _logger;
         private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
 
         private class Binding: IDisposable
         {
-            private readonly QueueClient _queueClient;
-            private readonly ILogger<AzureBusPublisher> _logger;
+            private readonly TopicClient _queueClient;
+            private readonly ILogger<AzureTopicPublisher> _logger;
 
             internal Binding(
                 MqSettings settings,
-                ILogger<AzureBusPublisher> logging,
+                ILogger<AzureTopicPublisher> logging,
                 AzureRxMqManagement queueManagement,
                 string queue,
                 Type type,
-                ILogger<AzureBusPublisher> logger)
+                ILogger<AzureTopicPublisher> logger)
             {
-                queueManagement.CreateQueIfMissing(queue, type);
+                queueManagement.CreateTopicIfMissing(queue, type);
 
-                _queueClient = new QueueClient(settings.ConnectionString, queue);
+                _queueClient = new TopicClient(settings.ConnectionString, queue);
 
                 logging.LogDebug($"Created new MQ binding '{queue}'.");
                 _logger = logger;
@@ -65,7 +65,7 @@ namespace Protacon.RxMq.AzureServiceBus
             }
         }
 
-        public AzureBusPublisher(IOptions<MqSettings> settings, AzureRxMqManagement queueManagement, ILogger<AzureBusPublisher> logging)
+        public AzureTopicPublisher(IOptions<MqSettings> settings, AzureRxMqManagement queueManagement, ILogger<AzureTopicPublisher> logging)
         {
             _settings = settings.Value;
             _queueManagement = queueManagement;
@@ -78,14 +78,12 @@ namespace Protacon.RxMq.AzureServiceBus
                 .ToList()
                 .ForEach(x => x.Dispose());
         }
-
         public Task SendAsync<T>(T message) where T : new()
         {
-            var queue = _settings.QueueNameBuilderForPublisher(message);
+            var queue = _settings.TopicNameBuilderForPublisher(message);
 
             if (!_bindings.ContainsKey(queue))
                 _bindings.Add(queue, new Binding(_settings, _logger, _queueManagement, queue, typeof(T), _logger));
-
 
             return _bindings[queue].SendAsync(message);
         }
