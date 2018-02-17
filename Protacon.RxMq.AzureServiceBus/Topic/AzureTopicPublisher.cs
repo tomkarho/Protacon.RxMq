@@ -15,28 +15,28 @@ namespace Protacon.RxMq.AzureServiceBus
     public class AzureTopicPublisher: IMqTopicPublisher
     {
         private readonly AzureBusTopicSettings _settings;
-        private readonly AzureBusTopicManagement _queueManagement;
+        private readonly AzureBusTopicManagement _topicManagement;
         private readonly ILogger<AzureTopicPublisher> _logger;
         private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
 
         private class Binding: IDisposable
         {
-            private readonly TopicClient _queueClient;
+            private readonly TopicClient _topicClient;
             private readonly ILogger<AzureTopicPublisher> _logger;
             private readonly AzureBusTopicSettings _settings;
 
             internal Binding(
                 AzureBusTopicSettings settings,
                 AzureBusTopicManagement queueManagement,
-                string queue,
+                string topic,
                 Type type,
                 ILogger<AzureTopicPublisher> logger)
             {
-                queueManagement.CreateTopicIfMissing(queue, type);
+                queueManagement.CreateTopicIfMissing(topic, type);
 
-                _queueClient = new TopicClient(settings.ConnectionString, queue);
+                _topicClient = new TopicClient(settings.ConnectionString, topic);
 
-                logger.LogInformation($"Created new MQ binding '{queue}'.");
+                logger.LogInformation($"Created new MQ binding '{topic}'.");
                 _logger = logger;
                 _settings = settings;
             }
@@ -44,7 +44,7 @@ namespace Protacon.RxMq.AzureServiceBus
             public Task SendAsync(object message)
             {
                 var asJson = JsonConvert.SerializeObject(
-                        new {Data = message},
+                        new { Data = message },
                         Formatting.None,
                         new JsonSerializerSettings
                         {
@@ -55,27 +55,28 @@ namespace Protacon.RxMq.AzureServiceBus
 
                 var contentJsonBytes = Encoding.UTF8.GetBytes(asJson);
 
-                var body = new Message(contentJsonBytes) {
-                    ContentType = "application/json",
+                var body = new Message(contentJsonBytes)
+                {
+                    ContentType = "application/json"
                 };
 
                 _settings.AzureMessagePropertyBuilder(message)
                     .ToList()
                     .ForEach(body.UserProperties.Add);
 
-                return _queueClient.SendAsync(body);
+                return _topicClient.SendAsync(body);
             }
 
             public void Dispose()
             {
-                _queueClient.CloseAsync();
+                _topicClient.CloseAsync();
             }
         }
 
-        public AzureTopicPublisher(IOptions<AzureBusTopicSettings> settings, AzureBusTopicManagement queueManagement, ILogger<AzureTopicPublisher> logging)
+        public AzureTopicPublisher(IOptions<AzureBusTopicSettings> settings, AzureBusTopicManagement topicManagement, ILogger<AzureTopicPublisher> logging)
         {
             _settings = settings.Value;
-            _queueManagement = queueManagement;
+            _topicManagement = topicManagement;
             _logger = logging;
         }
 
@@ -87,12 +88,12 @@ namespace Protacon.RxMq.AzureServiceBus
         }
         public Task SendAsync<T>(T message) where T : new()
         {
-            var queue = _settings.TopicNameBuilderForPublisher(message);
+            var topic = _settings.TopicNameBuilderForPublisher(message);
 
-            if (!_bindings.ContainsKey(queue))
-                _bindings.Add(queue, new Binding(_settings, _queueManagement, queue, typeof(T), _logger));
+            if (!_bindings.ContainsKey(topic))
+                _bindings.Add(topic, new Binding(_settings, _topicManagement, topic, typeof(T), _logger));
 
-            return _bindings[queue].SendAsync(message);
+            return _bindings[topic].SendAsync(message);
         }
     }
 }

@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using Protacon.RxMq.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Reactive.Concurrency;
 
 namespace Protacon.RxMq.AzureServiceBus
 {
@@ -62,7 +63,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 return parsed["data"].ToObject<T>();
             }
 
-            public Subject<T> Subject { get; } = new Subject<T>();
+            public ReplaySubject<T> Subject { get; } = new ReplaySubject<T>(TimeSpan.FromSeconds(30));
 
             public void Dispose()
             {

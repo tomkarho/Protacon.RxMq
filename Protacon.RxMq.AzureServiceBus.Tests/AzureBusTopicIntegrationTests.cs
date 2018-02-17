@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Threading;
 using FluentAssertions;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Logging;
@@ -20,55 +22,68 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             var publisher = new AzureTopicPublisher(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
 
             var id = Guid.NewGuid();
+            var listener = subscriber.Messages<TestMessageForTopic>();
 
-            publisher.SendAsync(new TestMessageForTopic
+            await publisher.SendAsync(new TestMessageForTopic
             {
                 ExampleId = id
-            }).Wait();
+            });
 
-            await subscriber.Messages<TestMessageForTopic>()
+            await listener
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5))
+                .Timeout(TimeSpan.FromSeconds(10))
                 .FirstAsync();
         }
 
         [Fact]
         public async void WhenFiltersAreSet_Then()
         {
+            // Arrrange.
             var correctTenantId = Guid.NewGuid();
             var invalidTenantId = Guid.NewGuid();
 
             var settings = TestSettings.TopicSettingsOptions(s => {
-                s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", correctTenantId } };
+                s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", ((TestMessageForTopic)message).TenantId } };
                 s.AzureSubscriptionFilters.Add("filter", new SqlFilter($"tenant = '{correctTenantId}'"));
             });
 
             var publisher = new AzureTopicPublisher(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
             var subscriber = new AzureTopicSubscriber(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicSubscriber>>());
 
-            var invalidTenantSettings = TestSettings.TopicSettingsOptions(s => {
-                s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", invalidTenantId } };
-                s.AzureSubscriptionFilters.Add("filter", new SqlFilter($"tenant = '{correctTenantId}'"));
+            var id = Guid.NewGuid();
+            var invalidTenantMessageId = Guid.NewGuid();
+            var listener = subscriber.Messages<TestMessageForTopic>();
+
+            // Act.
+            await publisher.SendAsync(new TestMessageForTopic
+            {
+                ExampleId = id,
+                TenantId = correctTenantId.ToString()
             });
 
-            var invalidSubscriber = new AzureTopicSubscriber(invalidTenantSettings, new AzureBusTopicManagement(invalidTenantSettings), Substitute.For<ILogger<AzureTopicSubscriber>>());
-
-            var id = Guid.NewGuid();
-
-            publisher.SendAsync(new TestMessageForTopic
+            await publisher.SendAsync(new TestMessageForTopic
             {
-                ExampleId = Guid.NewGuid()
-            }).Wait();
+                ExampleId = invalidTenantMessageId,
+                TenantId = invalidTenantId.ToString()
+            });
 
-            await subscriber.Messages<TestMessageForTopic>()
+            // Assert.
+            await listener
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5))
+                .Timeout(TimeSpan.FromSeconds(10))
                 .FirstAsync();
 
-            await subscriber.Messages<TestMessageForTopic>()
-                .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5))
-                .FirstAsync();
+            listener
+                .Where(x => x.ExampleId == invalidTenantMessageId)
+                .Timeout(TimeSpan.FromSeconds(10))
+                .Invoking(x => x.FirstAsync().Wait())
+                .Should()
+                .Throw<InvalidOperationException>();
+        }
+
+        [Fact]
+        public void WhenMultipleThreadsAreWriting_ThenSubscribingWorksAsExpected()
+        {
         }
     }
 }
