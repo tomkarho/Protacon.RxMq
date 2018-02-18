@@ -49,7 +49,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             {
                 var sender = _messagingFactory.CreateMessageSender(queueName);
 
-                var body = 
+                var body =
                     JsonConvert.SerializeObject(
                         new {Data = message},
                         Formatting.None,
