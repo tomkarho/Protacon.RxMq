@@ -46,7 +46,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 .Create();
         };
 
-        public Dictionary<string, Filter> AzureSubscriptionFilters { get; set; } = new Dictionary<string, Filter>();
+        public Dictionary<string, Filter> AzureSubscriptionRules { get; set; } = new Dictionary<string, Filter>() { { "getEverything", new TrueFilter() }};
         public Func<object, Dictionary<string, object>> AzureMessagePropertyBuilder {get; set; } = message => new Dictionary<string, object>();
     }
 }

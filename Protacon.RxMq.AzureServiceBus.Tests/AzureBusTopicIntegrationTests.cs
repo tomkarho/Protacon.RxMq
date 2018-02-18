@@ -44,7 +44,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             var settings = TestSettings.TopicSettingsOptions(s => {
                 s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", ((TestMessageForTopic)message).TenantId } };
-                s.AzureSubscriptionFilters.Add("filter", new SqlFilter($"user.tenant='{correctTenantId}'"));
+                s.AzureSubscriptionRules.Clear();
+                s.AzureSubscriptionRules.Add("filter", new SqlFilter($"user.tenant='{correctTenantId}'"));
             });
 
             var publisher = new AzureTopicPublisher(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
@@ -72,15 +73,15 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             // Assert.
             await listener
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(100))
-                .FirstAsync();
-
-            var foo = await listener
-                .Where(x => {
-                    return x.ExampleId == invalidTenantMessageId;
-                })
                 .Timeout(TimeSpan.FromSeconds(10))
                 .FirstAsync();
+
+            listener
+                .Where(x => x.ExampleId == invalidTenantMessageId)
+                .Timeout(TimeSpan.FromSeconds(10))
+                .Invoking(x => x.FirstAsync().Wait())
+                .Should()
+                .Throw<TimeoutException>();
         }
 
         [Fact]
