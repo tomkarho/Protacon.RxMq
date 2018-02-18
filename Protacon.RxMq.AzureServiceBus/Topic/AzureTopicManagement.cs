@@ -21,6 +21,7 @@ namespace Protacon.RxMq.AzureServiceBus
             CreateTopicIfMissing(topicName, messageType, @namespace);
 
             var topic = @namespace.Topics.List().Single(x => x.Name == topicName);
+
             if (!topic.Subscriptions.List().Any(x => x.Name == subscriptionName))
             {
                 _settings.AzureSubscriptionBuilder(topic.Subscriptions.Define(subscriptionName), messageType);

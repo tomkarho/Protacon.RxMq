@@ -30,6 +30,10 @@ namespace Protacon.RxMq.AzureServiceBus
 
                 var subscriptionClient = new SubscriptionClient(settings.ConnectionString, topicName, subscriptionName);
 
+                settings.AzureSubscriptionFilters
+                    .ToList()
+                    .ForEach(x => subscriptionClient.AddRuleAsync(x.Key, x.Value).Wait());
+
                 subscriptionClient.RegisterMessageHandler(
                     async (message, _) =>
                     {
@@ -40,7 +44,7 @@ namespace Protacon.RxMq.AzureServiceBus
                             logging.LogInformation($"Received '{subscriptionName}': {body}");
 
                             var asObject = AsObject(body);
-
+                            var foox = subscriptionClient.GetRulesAsync().Result;
                             Subject.OnNext(asObject);
                         }
                         catch (Exception ex)

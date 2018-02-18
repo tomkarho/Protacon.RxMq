@@ -36,7 +36,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         }
 
         [Fact]
-        public async void WhenFiltersAreSet_Then()
+        public async void WhenFiltersAreSet_ThenDontReturnInvalidTenantMessages()
         {
             // Arrrange.
             var correctTenantId = Guid.NewGuid();
@@ -44,7 +44,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             var settings = TestSettings.TopicSettingsOptions(s => {
                 s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", ((TestMessageForTopic)message).TenantId } };
-                s.AzureSubscriptionFilters.Add("filter", new SqlFilter($"tenant = '{correctTenantId}'"));
+                s.AzureSubscriptionFilters.Add("filter", new SqlFilter($"user.tenant='{correctTenantId}'"));
             });
 
             var publisher = new AzureTopicPublisher(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
@@ -58,27 +58,29 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             await publisher.SendAsync(new TestMessageForTopic
             {
                 ExampleId = id,
-                TenantId = correctTenantId.ToString()
+                TenantId = correctTenantId.ToString(),
+                Something = "valid"
             });
 
             await publisher.SendAsync(new TestMessageForTopic
             {
                 ExampleId = invalidTenantMessageId,
-                TenantId = invalidTenantId.ToString()
+                TenantId = invalidTenantId.ToString(),
+                Something = "invalid"
             });
 
             // Assert.
             await listener
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(10))
+                .Timeout(TimeSpan.FromSeconds(100))
                 .FirstAsync();
 
-            listener
-                .Where(x => x.ExampleId == invalidTenantMessageId)
+            var foo = await listener
+                .Where(x => {
+                    return x.ExampleId == invalidTenantMessageId;
+                })
                 .Timeout(TimeSpan.FromSeconds(10))
-                .Invoking(x => x.FirstAsync().Wait())
-                .Should()
-                .Throw<InvalidOperationException>();
+                .FirstAsync();
         }
 
         [Fact]
