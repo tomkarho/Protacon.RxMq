@@ -23,7 +23,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
 
             await subscriber.Messages<TestMessage>()
                 .Timeout(TimeSpan.FromSeconds(30))
-                .FirstAsync(x => x.Message.ExampleId == id);
+                .FirstAsync(x => x.ExampleId == id);
 
             subscriber.Dispose();
         }
@@ -51,7 +51,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
 
             await subscriber.Messages<TestMessage>()
                 .Timeout(TimeSpan.FromSeconds(30))
-                .FirstOrDefaultAsync(x => x.Message.ExampleId == message.ExampleId);
+                .FirstOrDefaultAsync(x => x.ExampleId == message.ExampleId);
 
             subscriber.Dispose();
         }

@@ -24,7 +24,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             }).Wait();
 
             await subscriber.Messages<TestMessage>()
-                .Where(x => x.Message.ExampleId == id)
+                .Where(x => x.ExampleId == id)
                 .Timeout(TimeSpan.FromSeconds(5))
                 .FirstAsync();
         }
@@ -59,7 +59,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .Timeout(TimeSpan.FromSeconds(20))
                 .FirstAsync();
 
-            result.Message.ExampleId.Should().Be(message.ExampleId);
+            result.ExampleId.Should().Be(message.ExampleId);
         }
 
         [Fact]
@@ -110,7 +110,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .Timeout(TimeSpan.FromSeconds(20))
                 .FirstAsync();
 
-            result.Message.ExampleId.Should().Be(message.ExampleId);
+            result.ExampleId.Should().Be(message.ExampleId);
         }
     }
 }

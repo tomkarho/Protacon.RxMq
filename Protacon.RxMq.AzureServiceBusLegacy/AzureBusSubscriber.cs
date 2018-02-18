@@ -49,8 +49,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
 
                             logMessage($"Received '{queueName}': {body}");
 
-                            Subject.OnNext(new Envelope<T>(JObject.Parse(body)["data"].ToObject<T>(),
-                                new MessageAckAzureServiceBus(message)));
+                            Subject.OnNext(JObject.Parse(body)["data"].ToObject<T>());
                         }
                     }
                     catch (Exception ex)
@@ -60,7 +59,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                 }, new OnMessageOptions { AutoComplete = true });
             }
 
-            public Subject<Envelope<T>> Subject { get; } = new Subject<Envelope<T>>();
+            public Subject<T> Subject { get; } = new Subject<T>();
 
             public void Dispose()
             {
@@ -80,7 +79,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                 NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
         }
 
-        public IObservable<Envelope<T>> Messages<T>() where T : new()
+        public IObservable<T> Messages<T>() where T : new()
         {
             if (!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _settings, _logMessage, _logError));

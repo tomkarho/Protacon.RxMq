@@ -39,9 +39,7 @@ namespace Protacon.RxMq.AzureServiceBus
 
                             var asObject = AsObject(body);
 
-                            Subject.OnNext(
-                                new Envelope<T>(asObject,
-                                new MessageAckAzureServiceBus(queueClient, message.SystemProperties.LockToken)));
+                            Subject.OnNext(asObject);
                         }
                         catch (Exception ex)
                         {
@@ -63,7 +61,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 return parsed["data"].ToObject<T>();
             }
 
-            public Subject<Envelope<T>> Subject { get; } = new Subject<Envelope<T>>();
+            public Subject<T> Subject { get; } = new Subject<T>();
 
             public void Dispose()
             {
@@ -78,7 +76,7 @@ namespace Protacon.RxMq.AzureServiceBus
             _logging = logging;
         }
 
-        public IObservable<Envelope<T>> Messages<T>() where T: new()
+        public IObservable<T> Messages<T>() where T: new()
         {
             if(!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));
