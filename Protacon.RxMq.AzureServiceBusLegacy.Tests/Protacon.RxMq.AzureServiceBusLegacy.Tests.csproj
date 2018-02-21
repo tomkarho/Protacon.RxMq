@@ -17,5 +17,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Protacon.RxMq.AzureServiceBusLegacy\Protacon.RxMq.AzureServiceBusLegacy.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Update="client-secrets.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

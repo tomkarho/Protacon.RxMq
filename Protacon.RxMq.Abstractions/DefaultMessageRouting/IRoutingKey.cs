@@ -1,4 +1,4 @@
-namespace Protacon.RxMq.Abstractions
+namespace Protacon.RxMq.Abstractions.DefaultMessageRouting
 {
     public interface IRoutingKey
     {

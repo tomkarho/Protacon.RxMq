@@ -1,5 +1,6 @@
 using System;
 using Protacon.RxMq.Abstractions;
+using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
 namespace Protacon.RxMq.AzureServiceBus.Tests.Messages
 {

@@ -3,7 +3,7 @@ using System.Linq;
 using Microsoft.Azure.Management.ServiceBus.Fluent;
 using Microsoft.Extensions.Options;
 
-namespace Protacon.RxMq.AzureServiceBus
+namespace Protacon.RxMq.AzureServiceBus.Topic
 {
     public class AzureBusTopicManagement
     {

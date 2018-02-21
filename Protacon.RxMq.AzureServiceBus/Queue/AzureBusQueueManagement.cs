@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Linq;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ServiceBus.Fluent;
 using Microsoft.Extensions.Options;
 
-namespace Protacon.RxMq.AzureServiceBus
+namespace Protacon.RxMq.AzureServiceBus.Queue
 {
     public class AzureBusQueueManagement
     {

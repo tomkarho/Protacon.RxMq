@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Protacon.RxMq.AzureServiceBus.Queue;
+using Protacon.RxMq.AzureServiceBus.Topic;
 
 namespace Protacon.RxMq.AzureServiceBus.Tests
 {

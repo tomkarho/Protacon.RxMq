@@ -3,12 +3,13 @@ using System.Reactive.Linq;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using Protacon.RxMq.AzureServiceBus.Queue;
 using Protacon.RxMq.AzureServiceBus.Tests.Messages;
 using Xunit;
 
 namespace Protacon.RxMq.AzureServiceBus.Tests
 {
-    public class AzureBusIntegrationTests
+    public class AzureBusQueueIntegrationTests
     {
         [Fact]
         public async void WhenMessageIsSend_ThenItCanBeReceived()

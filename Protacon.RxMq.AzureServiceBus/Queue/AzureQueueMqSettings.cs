@@ -1,7 +1,7 @@
 using System;
-using Protacon.RxMq.Abstractions;
+using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
-namespace Protacon.RxMq.AzureServiceBus
+namespace Protacon.RxMq.AzureServiceBus.Queue
 {
     public class AzureBusQueueSettings: AzureMqSettingsBase
     {

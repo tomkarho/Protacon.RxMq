@@ -4,13 +4,12 @@ using System.Linq;
 using System.Reactive.Subjects;
 using System.Text;
 using Microsoft.Azure.ServiceBus;
-using Newtonsoft.Json.Linq;
-using Protacon.RxMq.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Reactive.Concurrency;
+using Newtonsoft.Json.Linq;
+using Protacon.RxMq.Abstractions;
 
-namespace Protacon.RxMq.AzureServiceBus
+namespace Protacon.RxMq.AzureServiceBus.Topic
 {
     public class AzureTopicSubscriber: IMqTopicSubscriber
     {

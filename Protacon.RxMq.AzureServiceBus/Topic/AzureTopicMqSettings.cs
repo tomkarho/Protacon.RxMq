@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Azure.ServiceBus;
+using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
-namespace Protacon.RxMq.AzureServiceBus
+namespace Protacon.RxMq.AzureServiceBus.Topic
 {
     public class AzureBusTopicSettings: AzureMqSettingsBase
     {
@@ -12,23 +13,23 @@ namespace Protacon.RxMq.AzureServiceBus
         {
             var instance = Activator.CreateInstance(type);
 
-            if (instance is Abstractions.ITopic)
+            if (instance is ITopic)
             {
-                return ((Abstractions.ITopic)instance).TopicName;
+                return ((ITopic)instance).TopicName;
             }
 
-            throw new InvalidOperationException($"Default implementation of queue name builder expects used objects to extend '{nameof(Abstractions.ITopic)}'");
+            throw new InvalidOperationException($"Default implementation of queue name builder expects used objects to extend '{nameof(ITopic)}'");
         };
 
 
         public Func<object, string> TopicNameBuilderForPublisher { get; set; } = instance =>
         {
-            if (instance is Abstractions.ITopic)
+            if (instance is ITopic)
             {
-                return ((Abstractions.ITopic)instance).TopicName;
+                return ((ITopic)instance).TopicName;
             }
 
-            throw new InvalidOperationException($"Default implementation of topic name builder expects used objects to extend '{nameof(Abstractions.ITopic)}'");
+            throw new InvalidOperationException($"Default implementation of topic name builder expects used objects to extend '{nameof(ITopic)}'");
         };
 
         public Action<Microsoft.Azure.Management.ServiceBus.Fluent.Topic.Definition.IBlank, Type> AzureTopicBuilder { get; set; } = (create, messageType) =>
@@ -46,7 +47,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 .Create();
         };
 
-        public Dictionary<string, Filter> AzureSubscriptionRules { get; set; } = new Dictionary<string, Filter>() { { "getEverything", new TrueFilter() }};
+        public Dictionary<string, Filter> AzureSubscriptionRules { get; set; } = new Dictionary<string, Filter> { { "getEverything", new TrueFilter() }};
         public Func<object, Dictionary<string, object>> AzureMessagePropertyBuilder {get; set; } = message => new Dictionary<string, object>();
     }
 }

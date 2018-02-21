@@ -1,19 +1,18 @@
-﻿using Protacon.RxMq.Abstractions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Subjects;
-using System.Text;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using Newtonsoft.Json.Linq;
+using Protacon.RxMq.Abstractions;
 
-namespace Protacon.RxMq.AzureServiceBusLegacy
+namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
 {
-    public class AzureBusSubscriber: IMqQueSubscriber
+    public class AzureBusQueueSubscriber: IMqQueSubscriber
     {
-        private readonly MqSettings _settings;
+        private readonly AzureQueueMqSettings _settings;
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
@@ -25,7 +24,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
         {
             private readonly MessageReceiver _receiver;
 
-            internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, MqSettings settings, Action<string> logMessage, Action<string> logError)
+            internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, AzureQueueMqSettings settings, Action<string> logMessage, Action<string> logError)
             {
                 var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
 
@@ -68,7 +67,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             }
         }
 
-        public AzureBusSubscriber(MqSettings settings, Action<string> logMessage, Action<string> logError)
+        public AzureBusQueueSubscriber(AzureQueueMqSettings settings, Action<string> logMessage, Action<string> logError)
         {
             _settings = settings;
             _logMessage = logMessage;

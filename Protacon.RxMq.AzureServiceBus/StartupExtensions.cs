@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Protacon.RxMq.Abstractions;
+using Protacon.RxMq.AzureServiceBus.Queue;
+using Protacon.RxMq.AzureServiceBus.Topic;
 
 namespace Protacon.RxMq.AzureServiceBus
 {
