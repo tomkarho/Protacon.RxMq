@@ -8,9 +8,10 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
     {
         public Func<Type, string> QueueNameBuilderForSubscriber { get; set; } = type =>
         {
-            if (type.IsAssignableFrom(typeof(IQueueItem)))
+            var instance = Activator.CreateInstance(type);
+
+            if (instance is IQueueItem)
             {
-                var instance = Activator.CreateInstance(type);
                 return ((IQueueItem)instance).QueueName;
             }
 

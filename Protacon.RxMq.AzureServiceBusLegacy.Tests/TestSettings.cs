@@ -10,7 +10,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
     {
         public static AzureQueueMqSettings MqSettingsForQueue()
         {
-            var  secretFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-secrets.json");
+            var  secretFile = Path.Combine(Environment.CurrentDirectory, "client-secrets.json");
             JObject secretFileContent = new JObject();
 
             if(File.Exists(secretFile))
@@ -18,11 +18,14 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
                 secretFileContent = JObject.Parse(File.ReadAllText(secretFile));
             }
 
+            var queueName = Guid.NewGuid().ToString();
             return new AzureQueueMqSettings
             {
                 ConnectionString = secretFileContent["ConnectionString"]?.ToString()
                     ?? Environment.GetEnvironmentVariable("ConnectionString") ??
-                    throw new InvalidOperationException()
+                    throw new InvalidOperationException("Missing secrets."),
+                QueueNameBuilderForPublisher = (_) => queueName,
+                QueueNameBuilderForSubscriber= (_) => queueName
             };
         }
 
@@ -35,13 +38,14 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             {
                 secretFileContent = JObject.Parse(File.ReadAllText(secretFile));
             }
-
+            var topicName = "testtopic_" + Guid.NewGuid();
             return new AzureTopicMqSettings
             {
                 ConnectionString = secretFileContent["ConnectionString"]?.ToString()
                                    ?? Environment.GetEnvironmentVariable("ConnectionString") ??
                                    throw new InvalidOperationException("Missing secrets."),
-                TopicSubscriberId = Guid.NewGuid().ToString().Substring(0, 12)
+                TopicSubscriberId = Guid.NewGuid().ToString().Substring(0, 12),
+                TopicNameBuilder = _ => topicName.Substring(0, 12)
             };
         }
     }

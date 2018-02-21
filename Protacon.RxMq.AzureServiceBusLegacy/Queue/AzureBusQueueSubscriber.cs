@@ -58,7 +58,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
                 }, new OnMessageOptions { AutoComplete = true });
             }
 
-            public Subject<T> Subject { get; } = new Subject<T>();
+            public ReplaySubject<T> Subject { get; } = new ReplaySubject<T>(TimeSpan.FromSeconds(30));
 
             public void Dispose()
             {

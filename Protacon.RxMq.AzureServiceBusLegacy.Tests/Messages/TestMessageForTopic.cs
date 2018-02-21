@@ -6,7 +6,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests.Messages
     public class TestMessageForTopic : ITopic
     {
         public Guid ExampleId { get; set; }
-        public string TenantId { get; set; }
+        public Guid TenantId { get; set; }
         public string TopicName => "testmessages_topic";
     }
 }

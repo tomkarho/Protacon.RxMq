@@ -39,12 +39,13 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             var correctTenantId = Guid.NewGuid();
 
             var settings = TestSettings.MqSettingsForTopic();
+            
             settings.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { { "tenant", ((TestMessageForTopic)message).TenantId } };
             settings.AzureSubscriptionRules.Clear();
             settings.AzureSubscriptionRules.Add("filter", new SqlFilter($"user.tenant='{correctTenantId}'"));
 
-            var publisher = new AzureBusTopicPublisher(settings, _ => {}, _ => {});
-            var subscriber = new AzureBusTopicSubscriber(settings, _ => {}, _ => {});
+            var publisher = new AzureBusTopicPublisher(settings, _ => {}, _ => throw new InvalidOperationException("Errorlogger"));
+            var subscriber = new AzureBusTopicSubscriber(settings, _ => {}, _ => throw new InvalidOperationException("Errorlogger"));
 
             var id = Guid.NewGuid();
             var invalidTenantMessageId = Guid.NewGuid();
@@ -54,22 +55,24 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             await publisher.SendAsync(new TestMessageForTopic
             {
                 ExampleId = id,
+                TenantId = correctTenantId
             });
 
             await publisher.SendAsync(new TestMessageForTopic
             {
-                ExampleId = invalidTenantMessageId
+                ExampleId = invalidTenantMessageId,
+                TenantId = Guid.NewGuid()
             });
 
             // Assert.
             await listener
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(10))
+                .Timeout(TimeSpan.FromSeconds(30))
                 .FirstAsync();
 
             listener
                 .Where(x => x.ExampleId == invalidTenantMessageId)
-                .Timeout(TimeSpan.FromSeconds(10))
+                .Timeout(TimeSpan.FromSeconds(15))
                 .Invoking(x => x.FirstAsync().Wait())
                 .ShouldThrow<TimeoutException>();
         }

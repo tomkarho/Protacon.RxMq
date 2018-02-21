@@ -26,7 +26,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, AzureTopicMqSettings settings, Action<string> logMessage, Action<string> logError)
             {
-                var topicPath = settings.TopicNameBuilderForSubscriber(typeof(T));
+                var topicPath = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicPath}.{settings.TopicSubscriberId}";
 
                 if (!namespaceManager.TopicExists(topicPath))
@@ -70,7 +70,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 }, new OnMessageOptions { AutoComplete = true });
             }
 
-            public Subject<T> Subject { get; } = new Subject<T>();
+            public ReplaySubject<T> Subject { get; } = new ReplaySubject<T>(TimeSpan.FromSeconds(30));
 
             public void Dispose()
             {
