@@ -19,10 +19,10 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             var id = Guid.NewGuid();
 
-            publisher.SendAsync(new TestMessage
+            await publisher.SendAsync(new TestMessage
             {
                 ExampleId = id
-            }).Wait();
+            });
 
             await subscriber.Messages<TestMessage>()
                 .Where(x => x.ExampleId == id)
@@ -52,7 +52,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             // Act.
             publisher
-                .Invoking(x => x.SendAsync(message).Wait())
+                .Invoking(x => x.SendAsync(message).Wait(TimeSpan.FromSeconds(10)))
                 .Should().NotThrow<Exception>();
 
             // Assert.
@@ -103,7 +103,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             // Act.
             publisher
-                .Invoking(x => x.SendAsync(message).Wait())
+                .Invoking(x => x.SendAsync(message).Wait(TimeSpan.FromSeconds(10)))
                 .Should().NotThrow<Exception>();
 
             // Assert.

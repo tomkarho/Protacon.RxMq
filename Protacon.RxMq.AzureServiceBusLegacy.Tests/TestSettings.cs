@@ -10,7 +10,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
     {
         public static AzureQueueMqSettings MqSettingsForQueue()
         {
-            var  secretFile = Path.Combine(Environment.CurrentDirectory, "client-secrets.json");
+            var  secretFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-secrets.json");
             JObject secretFileContent = new JObject();
 
             if(File.Exists(secretFile))
@@ -31,7 +31,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
 
         public static AzureTopicMqSettings MqSettingsForTopic()
         {
-            var secretFile = Path.Combine(Environment.CurrentDirectory, "client-secrets.json");
+            var secretFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "client-secrets.json");
             JObject secretFileContent = new JObject();
 
             if (File.Exists(secretFile))
