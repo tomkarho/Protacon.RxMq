@@ -1,17 +1,28 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Protacon.RxMq.Abstractions;
+using Protacon.RxMq.AzureServiceBus.Queue;
+using Protacon.RxMq.AzureServiceBus.Topic;
 
 namespace Protacon.RxMq.AzureServiceBus
 {
     public static class StartupExtensions
     {
-        public static IServiceCollection AddAzureBusMq(this IServiceCollection services, Action<MqSettings> configure)
+        public static IServiceCollection AddAzureBusQueues(this IServiceCollection services, Action<AzureBusTopicSettings> configure)
         {
             services.Configure(configure);
-            services.AddTransient<AzureQueueManagement>();
-            services.AddSingleton<IMqSubscriber, AzureBusSubscriber>();
-            services.AddSingleton<IMqPublisher, AzureBusPublisher>();
+            services.AddTransient<AzureBusQueueManagement>();
+            services.AddSingleton<IMqQueSubscriber, AzureQueueSubscriber>();
+            services.AddSingleton<IMqQuePublisher, AzureQueuePublisher>();
+            return services;
+        }
+
+        public static IServiceCollection AddAzureBusTopics(this IServiceCollection services, Action<AzureBusTopicSettings> configure)
+        {
+            services.Configure(configure);
+            services.AddTransient<AzureBusQueueManagement>();
+            services.AddSingleton<IMqTopicSubscriber, IMqTopicSubscriber>();
+            services.AddSingleton<IMqTopicPublisher, AzureTopicPublisher>();
             return services;
         }
     }

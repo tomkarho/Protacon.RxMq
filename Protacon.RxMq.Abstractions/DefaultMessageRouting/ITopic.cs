@@ -1,7 +1,7 @@
 namespace Protacon.RxMq.Abstractions.DefaultMessageRouting
 {
-    public interface IRoutingKey
+    public interface ITopic
     {
-        string RoutingKey { get; }
+        string TopicName { get; }
     }
 }

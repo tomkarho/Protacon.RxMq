@@ -1,18 +1,17 @@
 ﻿using System;
 using Microsoft.ServiceBus.Messaging;
-using Protacon.RxMq.Abstractions;
+using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
-namespace Protacon.RxMq.AzureServiceBusLegacy
+namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
 {
-    public class MqSettings
+    public class AzureQueueMqSettings : MqSettingsBase
     {
-        public string ConnectionString { get; set; }
-
         public Func<Type, string> QueueNameBuilderForSubscriber { get; set; } = type =>
         {
-            if (type.IsAssignableFrom(typeof(IQueueItem)))
+            var instance = Activator.CreateInstance(type);
+
+            if (instance is IQueueItem)
             {
-                var instance = Activator.CreateInstance(type);
                 return ((IQueueItem)instance).QueueName;
             }
 

@@ -3,29 +3,31 @@ using System.Reactive.Linq;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using Protacon.RxMq.AzureServiceBus.Queue;
 using Protacon.RxMq.AzureServiceBus.Tests.Messages;
 using Xunit;
 
 namespace Protacon.RxMq.AzureServiceBus.Tests
 {
-    public class AzureBusIntegrationTests
+    public class AzureBusQueueIntegrationTests
     {
         [Fact]
-        public void WhenMessageIsSend_ThenItCanBeReceived()
+        public async void WhenMessageIsSend_ThenItCanBeReceived()
         {
-            var subscriber = new AzureBusSubscriber(TestSettings.MqSettingsOptions(), new AzureQueueManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusSubscriber>>());
-            var publisher = new AzureBusPublisher(TestSettings.MqSettingsOptions(), new AzureQueueManagement(TestSettings.MqSettingsOptions()), Substitute.For<ILogger<AzureBusPublisher>>());
+            var subscriber = new AzureQueueSubscriber(TestSettings.QueueSettingsOptions(), new AzureBusQueueManagement(TestSettings.QueueSettingsOptions()), Substitute.For<ILogger<AzureQueueSubscriber>>());
+            var publisher = new AzureQueuePublisher(TestSettings.QueueSettingsOptions(), new AzureBusQueueManagement(TestSettings.QueueSettingsOptions()), Substitute.For<ILogger<AzureQueuePublisher>>());
 
             var id = Guid.NewGuid();
 
-            publisher.SendAsync(new TestMessage
+            await publisher.SendAsync(new TestMessage
             {
-                ExampleId = Guid.NewGuid()
-            }).Wait();
+                ExampleId = id
+            });
 
-            subscriber.Messages<TestMessage>()
-                .Where(x => x.Message.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5));
+            await subscriber.Messages<TestMessage>()
+                .Where(x => x.ExampleId == id)
+                .Timeout(TimeSpan.FromSeconds(5))
+                .FirstAsync();
         }
 
         [Fact]
@@ -34,13 +36,13 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             // Arrange.
             var testQueueName = $"testque_{Guid.NewGuid()}";
 
-            var settings = TestSettings.MqSettingsOptions();
+            var settings = TestSettings.QueueSettingsOptions();
 
             settings.Value.QueueNameBuilderForPublisher = _ => testQueueName;
             settings.Value.QueueNameBuilderForSubscriber = _ => testQueueName;
 
-            var publisher = new AzureBusPublisher(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
-            var receiver = new AzureBusSubscriber(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureQueuePublisher(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueuePublisher>>());
+            var receiver = new AzureQueueSubscriber(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueueSubscriber>>());
 
             var message = new TestMessage
             {
@@ -50,7 +52,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             // Act.
             publisher
-                .Invoking(x => x.SendAsync(message).Wait())
+                .Invoking(x => x.SendAsync(message).Wait(TimeSpan.FromSeconds(10)))
                 .Should().NotThrow<Exception>();
 
             // Assert.
@@ -58,7 +60,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .Timeout(TimeSpan.FromSeconds(20))
                 .FirstAsync();
 
-            result.Message.ExampleId.Should().Be(message.ExampleId);
+            result.ExampleId.Should().Be(message.ExampleId);
         }
 
         [Fact]
@@ -67,7 +69,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             var tenant2 = Guid.NewGuid();
 
             // Arrange.
-            var settings = TestSettings.MqSettingsOptions();
+            var settings = TestSettings.QueueSettingsOptions();
 
             settings.Value.QueueNameBuilderForPublisher = x =>
             {
@@ -89,8 +91,8 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 throw new InvalidOperationException();
             };
 
-            var publisher = new AzureBusPublisher(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusPublisher>>());
-            var receiver = new AzureBusSubscriber(settings, new AzureQueueManagement(settings), Substitute.For<ILogger<AzureBusSubscriber>>());
+            var publisher = new AzureQueuePublisher(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueuePublisher>>());
+            var receiver = new AzureQueueSubscriber(settings, new AzureBusQueueManagement(settings), Substitute.For<ILogger<AzureQueueSubscriber>>());
 
             var message = new TestMessage
             {
@@ -101,7 +103,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             // Act.
             publisher
-                .Invoking(x => x.SendAsync(message).Wait())
+                .Invoking(x => x.SendAsync(message).Wait(TimeSpan.FromSeconds(10)))
                 .Should().NotThrow<Exception>();
 
             // Assert.
@@ -109,7 +111,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .Timeout(TimeSpan.FromSeconds(20))
                 .FirstAsync();
 
-            result.Message.ExampleId.Should().Be(message.ExampleId);
+            result.ExampleId.Should().Be(message.ExampleId);
         }
     }
 }

@@ -2,3 +2,52 @@
 [![Nuget](https://img.shields.io/nuget/dt/Protacon.RxMq.Abstractions.svg)](https://www.nuget.org/packages/Protacon.RxMq.Abstractions/)
 [![Nuget](https://img.shields.io/nuget/dt/Protacon.RxMq.AzureServiceBus.svg)](https://www.nuget.org/packages/Protacon.RxMq.AzureServiceBus/)
 [![Nuget](https://img.shields.io/nuget/dt/Protacon.RxMq.AzureServiceBusLegacy.svg)](https://www.nuget.org/packages/Protacon.RxMq.AzureServiceBusLegacy/)
+
+# RxMq
+Abstraction over common MQ channels with Rx.NET. Provides customizable messaging between clients and offers Observable endpoints for both topics and queues.
+
+## Messages
+Example message implementation (`ITopic` mechanic can be overwritten, it's just default behavior.)
+```csharp
+public class TestMessageForTopic: ITopic
+{
+    public Guid ExampleId { get; set; }
+    public string Something { get; set; }
+    public string TopicName => "v1.testtopic";
+}
+```
+
+## Sending
+Sending message
+
+```csharp
+await publisher.SendAsync(new TestMessage
+{
+    ExampleId = id
+});
+```
+
+## Receiving
+```csharp
+subscriber.Messages<TestMessage>().Subscribe(message => Console.WriteLine(x.ExampleId));
+```
+
+# AzureServiceBus
+Abstraction over Azure Service Bus.
+
+Contains modern .NET Core version and legacy (pre 4.7.2) version with full framework.
+
+## Configuring
+Configure `AzureQueueMqSettings`, there are configuration methods which can be overwritten if required. Common reason for configuring factory methods are
+* Multitenancy (with topics and subscription filters)
+* Custom behavior how topic, subscription and queue names are built.
+
+## Developing
+Requires NET core 2.x.
+
+Setup settings required in `AzureMqSettingsBase` with environment variables or client-secrets.json file.
+
+```bash
+dotnet restore
+dotnet test
+```

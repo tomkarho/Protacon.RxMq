@@ -1,13 +1,14 @@
-﻿using System;
+using System;
+using Protacon.RxMq.Abstractions;
 using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
 namespace Protacon.RxMq.AzureServiceBus.Tests.Messages
 {
-    public class TestMessage: IQueueItem
+    public class TestMessageForTopic: ITopic
     {
         public Guid ExampleId { get; set; }
         public string Something { get; set; }
         public string TenantId { get; set; }
-        public string QueueName { get; } = "testmessages";
+        public string TopicName => "v1.testtopic";
     }
 }

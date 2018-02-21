@@ -9,11 +9,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Protacon.RxMq.Abstractions;
 
-namespace Protacon.RxMq.AzureServiceBusLegacy
+namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
 {
-    public class AzureBusPublisher : IMqPublisher
+    public class AzureBusQueuePublisher : IMqQuePublisher
     {
-        private readonly MqSettings _settings;
+        private readonly AzureQueueMqSettings _settings;
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
@@ -28,9 +28,9 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             private readonly Action<string> _logError;
 
             internal Binding(
-                MessagingFactory messagingFactory, 
+                MessagingFactory messagingFactory,
                 NamespaceManager namespaceManager,
-                MqSettings settings,
+                AzureQueueMqSettings settings,
                 string queueName,
                 Action<string> logMessage, Action<string> logError)
             {
@@ -49,7 +49,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             {
                 var sender = _messagingFactory.CreateMessageSender(queueName);
 
-                var body = 
+                var body =
                     JsonConvert.SerializeObject(
                         new {Data = message},
                         Formatting.None,
@@ -81,7 +81,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
             }
         }
 
-        public AzureBusPublisher(MqSettings settings, Action<string> logMessage, Action<string> logError)
+        public AzureBusQueuePublisher(AzureQueueMqSettings settings, Action<string> logMessage, Action<string> logError)
         {
             _settings = settings;
             _logMessage = logMessage;

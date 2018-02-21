@@ -4,27 +4,27 @@ using System.Linq;
 using System.Reactive.Subjects;
 using System.Text;
 using Microsoft.Azure.ServiceBus;
-using Newtonsoft.Json.Linq;
-using Protacon.RxMq.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
+using Protacon.RxMq.Abstractions;
 
-namespace Protacon.RxMq.AzureServiceBus
+namespace Protacon.RxMq.AzureServiceBus.Queue
 {
-    public class AzureBusSubscriber: IMqSubscriber
+    public class AzureQueueSubscriber: IMqQueSubscriber
     {
-        private readonly MqSettings _settings;
-        private readonly AzureQueueManagement _queueManagement;
-        private readonly ILogger<AzureBusSubscriber> _logging;
+        private readonly AzureBusQueueSettings _settings;
+        private readonly AzureBusQueueManagement _queueManagement;
+        private readonly ILogger<AzureQueueSubscriber> _logging;
         private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
 
         private class Binding<T>: IDisposable where T: new()
         {
-            internal Binding(MqSettings settings, ILogger<AzureBusSubscriber> logging, AzureQueueManagement queueManagement)
+            internal Binding(AzureBusQueueSettings settings, ILogger<AzureQueueSubscriber> logging, AzureBusQueueManagement queueManagement)
             {
                 var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
 
-                queueManagement.CreateIfMissing(queueName, typeof(T));
+                queueManagement.CreateQueIfMissing(queueName, typeof(T));
 
                 var queueClient = new QueueClient(settings.ConnectionString, queueName);
 
@@ -39,9 +39,7 @@ namespace Protacon.RxMq.AzureServiceBus
 
                             var asObject = AsObject(body);
 
-                            Subject.OnNext(
-                                new Envelope<T>(asObject,
-                                new MessageAckAzureServiceBus(queueClient, message.SystemProperties.LockToken)));
+                            Subject.OnNext(asObject);
                         }
                         catch (Exception ex)
                         {
@@ -63,7 +61,7 @@ namespace Protacon.RxMq.AzureServiceBus
                 return parsed["data"].ToObject<T>();
             }
 
-            public Subject<Envelope<T>> Subject { get; } = new Subject<Envelope<T>>();
+            public Subject<T> Subject { get; } = new Subject<T>();
 
             public void Dispose()
             {
@@ -71,14 +69,14 @@ namespace Protacon.RxMq.AzureServiceBus
             }
         }
 
-        public AzureBusSubscriber(IOptions<MqSettings> settings, AzureQueueManagement queueManagement, ILogger<AzureBusSubscriber> logging)
+        public AzureQueueSubscriber(IOptions<AzureBusQueueSettings> settings, AzureBusQueueManagement queueManagement, ILogger<AzureQueueSubscriber> logging)
         {
             _settings = settings.Value;
             _queueManagement = queueManagement;
             _logging = logging;
         }
 
-        public IObservable<Envelope<T>> Messages<T>() where T: new()
+        public IObservable<T> Messages<T>() where T: new()
         {
             if(!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));
