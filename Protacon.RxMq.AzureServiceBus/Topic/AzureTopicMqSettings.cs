@@ -9,27 +9,16 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
     {
         public string TopicSubscriberId { get; set; } = Environment.MachineName;
 
-        public Func<Type, string> TopicNameBuilderForSubscriber { get; set; } = type =>
+        public Func<Type, string> TopicNameBuilder { get; set; } = type =>
         {
             var instance = Activator.CreateInstance(type);
 
-            if (instance is ITopic)
+            if (instance is ITopicItem)
             {
-                return ((ITopic)instance).TopicName;
+                return ((ITopicItem)instance).TopicName;
             }
 
-            throw new InvalidOperationException($"Default implementation of queue name builder expects used objects to extend '{nameof(ITopic)}'");
-        };
-
-
-        public Func<object, string> TopicNameBuilderForPublisher { get; set; } = instance =>
-        {
-            if (instance is ITopic)
-            {
-                return ((ITopic)instance).TopicName;
-            }
-
-            throw new InvalidOperationException($"Default implementation of topic name builder expects used objects to extend '{nameof(ITopic)}'");
+            throw new InvalidOperationException($"Default implementation of queue name builder expects used objects to extend '{nameof(ITopicItem)}'");
         };
 
         public Action<Microsoft.Azure.Management.ServiceBus.Fluent.Topic.Definition.IBlank, Type> AzureTopicBuilder { get; set; } = (create, messageType) =>

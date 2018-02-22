@@ -88,7 +88,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         }
         public Task SendAsync<T>(T message) where T : new()
         {
-            var topic = _settings.TopicNameBuilderForPublisher(message);
+            var topic = _settings.TopicNameBuilder(message.GetType());
 
             if (!_bindings.ContainsKey(topic))
                 _bindings.Add(topic, new Binding(_settings, _topicManagement, topic, typeof(T), _logger));

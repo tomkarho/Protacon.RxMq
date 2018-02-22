@@ -22,7 +22,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         {
             internal Binding(AzureBusTopicSettings settings, ILogger<AzureTopicSubscriber> logging, AzureBusTopicManagement queueManagement)
             {
-                var topicName = settings.TopicNameBuilderForSubscriber(typeof(T));
+                var topicName = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicName}.{settings.TopicSubscriberId}";
 
                 queueManagement.CreateSubscriptionIfMissing(topicName, subscriptionName, typeof(T));

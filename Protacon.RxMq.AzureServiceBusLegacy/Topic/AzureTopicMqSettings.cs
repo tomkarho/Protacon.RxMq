@@ -13,13 +13,13 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
         {
             var instance = Activator.CreateInstance(type);
 
-            if (instance is ITopic)
+            if (instance is ITopicItem)
             {
-                return ((ITopic) instance).TopicName;
+                return ((ITopicItem) instance).TopicName;
             }
 
             throw new InvalidOperationException(
-                $"Default implementation of queue name builder expects used objects to extend '{nameof(ITopic)}'");
+                $"Default implementation of queue name builder expects used objects to extend '{nameof(ITopicItem)}'");
         };
 
         public Dictionary<string, Filter> AzureSubscriptionRules { get; set; } = new Dictionary<string, Filter> { { "getEverything", new TrueFilter() } };

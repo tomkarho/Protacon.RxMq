@@ -4,7 +4,7 @@ using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
 namespace Protacon.RxMq.AzureServiceBus.Tests.Messages
 {
-    public class TestMessageForTopic: ITopic
+    public class TestMessageForTopic: ITopicItem
     {
         public Guid ExampleId { get; set; }
         public string Something { get; set; }
