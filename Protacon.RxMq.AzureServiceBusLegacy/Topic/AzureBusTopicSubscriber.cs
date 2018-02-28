@@ -10,7 +10,7 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
 {
-    public class AzureBusTopicSubscriber: IMqQueSubscriber
+    public class AzureBusTopicSubscriber: IMqTopicSubscriber
     {
         private readonly AzureTopicMqSettings _settings;
         private readonly Action<string> _logMessage;
