@@ -11,7 +11,7 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBus.Queue
 {
-    public class AzureQueueSubscriber: IMqQueSubscriber
+    public class AzureQueueSubscriber: IMqQueueSubscriber
     {
         private readonly AzureBusQueueSettings _settings;
         private readonly AzureBusQueueManagement _queueManagement;

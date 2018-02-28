@@ -2,7 +2,7 @@
 
 namespace Protacon.RxMq.Abstractions
 {
-    public interface IMqQueSubscriber: IDisposable
+    public interface IMqQueueSubscriber: IDisposable
     {
         IObservable<T> Messages<T>() where T : new();
     }
