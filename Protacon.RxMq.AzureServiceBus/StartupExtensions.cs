@@ -20,7 +20,7 @@ namespace Protacon.RxMq.AzureServiceBus
         public static IServiceCollection AddAzureBusTopics(this IServiceCollection services, Action<AzureBusTopicSettings> configure)
         {
             services.Configure(configure);
-            services.AddTransient<AzureBusQueueManagement>();
+            services.AddTransient<AzureBusTopicManagement>();
             services.AddSingleton<IMqTopicSubscriber, AzureTopicSubscriber>();
             services.AddSingleton<IMqTopicPublisher, AzureTopicPublisher>();
             return services;
