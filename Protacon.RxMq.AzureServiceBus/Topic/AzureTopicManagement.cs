@@ -20,7 +20,12 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
             CreateTopicIfMissing(topicName, messageType, @namespace);
 
-            var topic = @namespace.Topics.List().Single(x => x.Name == topicName);
+            var topic = @namespace.Topics.List().FirstOrDefault(x => x.Name == topicName);
+
+            if(topic == null)
+            {
+                throw new InvalidOperationException($"Cannot find topic '{topicName}' from topics '{string.Join(", ", @namespace.Topics.List().Select(x => x.Name))}'");
+            }
 
             if (!topic.Subscriptions.List().Any(x => x.Name == subscriptionName))
             {
