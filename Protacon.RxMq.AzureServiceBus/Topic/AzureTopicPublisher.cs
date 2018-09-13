@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Logging;
@@ -32,13 +33,11 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 Type type,
                 ILogger<AzureTopicPublisher> logger)
             {
-                queueManagement.CreateTopicIfMissing(topic, type);
-
-                _topicClient = new TopicClient(settings.ConnectionString, topic);
-
-                logger.LogInformation($"Created new MQ binding '{topic}'.");
                 _logger = logger;
                 _settings = settings;
+                queueManagement.CreateTopicIfMissing(topic, type);
+                _topicClient = new TopicClient(settings.ConnectionString, topic);
+                _logger.LogInformation($"Created new MQ binding '{topic}'.");
             }
 
             public Task SendAsync(object message)
@@ -73,7 +72,8 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             }
         }
 
-        public AzureTopicPublisher(IOptions<AzureBusTopicSettings> settings, AzureBusTopicManagement topicManagement, ILogger<AzureTopicPublisher> logging)
+        public AzureTopicPublisher(IOptions<AzureBusTopicSettings> settings, AzureBusTopicManagement topicManagement,
+            ILogger<AzureTopicPublisher> logging)
         {
             _settings = settings.Value;
             _topicManagement = topicManagement;
@@ -86,14 +86,105 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 .ToList()
                 .ForEach(x => x.Dispose());
         }
+
         public Task SendAsync<T>(T message) where T : new()
         {
             var topic = _settings.TopicNameBuilder(message.GetType());
 
             if (!_bindings.ContainsKey(topic))
-                _bindings.Add(topic, new Binding(_settings, _topicManagement, topic, typeof(T), _logger));
-
+            {
+                return TryCreateBinding(topic, typeof(T), message, 5, 60);
+            }
+            
             return _bindings[topic].SendAsync(message);
+        }
+
+        /// <summary>
+        /// Creates new Binding for topic in a safe way. If initial tries fail, it will fallback to intervaled retry's.
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <param name="type"></param>
+        /// <param name="message"></param>
+        /// <param name="instantRecoveryTries"></param>
+        /// <param name="lifeCycleRecoveryInterval"></param>
+        private async Task TryCreateBinding(string topic, Type type, object message, int instantRecoveryTries, int lifeCycleRecoveryInterval)
+        {
+            CancellationTokenSource cancellation = new CancellationTokenSource();
+            Binding binding;
+            int lifeCycleTryCount = 0;
+            Task task;
+
+            for (var i = 1; i <= instantRecoveryTries; i++)
+            {
+                _logger.LogInformation(
+                    $"TryCreateBinding: Try {i} of {instantRecoveryTries} for binding ('{topic}')");
+
+                binding = TryBinding(topic, type, message);
+                if (binding != null)
+                {
+                    _logger.LogInformation(
+                        $"TryCreateBinding: Binding successful ('{topic}', binding {i} of {instantRecoveryTries})");
+                    _bindings.Add(topic, binding);
+                    task = _bindings[topic].SendAsync(message);
+                    await task;
+                    break;
+                }
+            }
+
+            _logger.LogInformation(
+                $"TryCreateBinding: Could not create binding in instantRecoveryTries tries ('{topic}', {instantRecoveryTries} tries). " +
+                $"Trying again every {lifeCycleRecoveryInterval} sec.");
+
+            await RepeatActionEvery(TryLifeCycleBinding, lifeCycleRecoveryInterval, cancellation.Token);
+            task = _bindings[topic].SendAsync(message);
+
+            void TryLifeCycleBinding()
+            {
+                lifeCycleTryCount++;
+                _logger.LogInformation(
+                    $"TryCreateBinding: Try {lifeCycleTryCount} of lifeCycleRecoveryInterval ('{topic}')");
+                binding = TryBinding(topic, type, message);
+                if (binding != null)
+                {
+                    _logger.LogInformation(
+                        $"TryCreateBinding: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval)");
+                    _bindings.Add(topic, binding);
+                    cancellation.Cancel();
+                }
+            }
+            await task;
+        }
+
+        private Binding TryBinding(string topic, Type type, object message)
+        {
+            try
+            {
+                _topicManagement.CreateTopicIfMissing(topic, message.GetType());
+                return new Binding(_settings, _topicManagement, topic, type, _logger);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(
+                    $"TryCreateBinding: Calling recovery on topic '{topic}' for new Binding. Cause: error occurred {e}");
+                return null;
+            }
+        }
+
+        private async Task RepeatActionEvery(Action action, int interval, CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                action();
+                Task task = Task.Delay(TimeSpan.FromSeconds(interval), cancellationToken);
+                try
+                {
+                    await task;
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
+            }
         }
     }
 }
