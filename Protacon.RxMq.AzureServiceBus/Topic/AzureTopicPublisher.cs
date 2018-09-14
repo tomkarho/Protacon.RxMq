@@ -35,13 +35,9 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             {
                 _logger = logger;
                 _settings = settings;
-
                 queueManagement.CreateTopicIfMissing(topic, type);
-
                 _topicClient = new TopicClient(settings.ConnectionString, topic);
-
                 _logger.LogInformation($"Created new MQ binding '{topic}'.");
-
             }
 
             public Task SendAsync(object message)
@@ -62,7 +58,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 {
                     ContentType = "application/json"
                 };
-                
+
                 _settings.AzureMessagePropertyBuilder(message)
                     .ToList()
                     .ForEach(body.UserProperties.Add);
@@ -114,7 +110,6 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         private Task TryCreateBinding(string topic, Type type, object message, int instantRecoveryTries, int lifeCycleRecoveryInterval)
         {
             CancellationTokenSource cancellation = new CancellationTokenSource();
-            Binding binding;
             int lifeCycleTryCount = 0;
 
             for (var i = 1; i <= instantRecoveryTries; i++)
@@ -122,7 +117,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 _logger.LogInformation(
                     $"TryCreateBinding: Try {i} of {instantRecoveryTries} for binding ('{topic}')");
 
-                binding = TryBinding(topic, type, message);
+                var binding = TryBinding(topic, type, message);
                 if (binding != null)
                 {
                     _logger.LogInformation(
@@ -145,7 +140,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 lifeCycleTryCount++;
                 _logger.LogInformation(
                     $"TryCreateBinding: Try {lifeCycleTryCount} of lifeCycleRecoveryInterval ('{topic}')");
-                binding = TryBinding(topic, type, message);
+                var binding = TryBinding(topic, type, message);
                 if (binding != null)
                 {
                     _logger.LogInformation(
