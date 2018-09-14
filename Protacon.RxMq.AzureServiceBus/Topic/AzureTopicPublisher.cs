@@ -13,14 +13,14 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBus.Topic
 {
-    public class AzureTopicPublisher: IMqTopicPublisher
+    public class AzureTopicPublisher : IMqTopicPublisher
     {
         private readonly AzureBusTopicSettings _settings;
         private readonly AzureBusTopicManagement _topicManagement;
         private readonly ILogger<AzureTopicPublisher> _logger;
         private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
 
-        private class Binding: IDisposable
+        private class Binding : IDisposable
         {
             private readonly TopicClient _topicClient;
             private readonly ILogger<AzureTopicPublisher> _logger;
@@ -35,22 +35,26 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             {
                 _logger = logger;
                 _settings = settings;
+
                 queueManagement.CreateTopicIfMissing(topic, type);
+
                 _topicClient = new TopicClient(settings.ConnectionString, topic);
+
                 _logger.LogInformation($"Created new MQ binding '{topic}'.");
+
             }
 
             public Task SendAsync(object message)
             {
                 var asJson = JsonConvert.SerializeObject(
-                        new { Data = message },
-                        Formatting.None,
-                        new JsonSerializerSettings
-                        {
-                            ContractResolver = new CamelCasePropertyNamesContractResolver()
-                        });
+                    new { Data = message },
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        ContractResolver = new CamelCasePropertyNamesContractResolver()
+                    });
 
-                _logger.LogDebug($"Sending message to queue '{message}'");
+                _logger.LogInformation($"Sending message to queue '{message}'");
 
                 var contentJsonBytes = Encoding.UTF8.GetBytes(asJson);
 
@@ -58,7 +62,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 {
                     ContentType = "application/json"
                 };
-
+                
                 _settings.AzureMessagePropertyBuilder(message)
                     .ToList()
                     .ForEach(body.UserProperties.Add);
@@ -93,26 +97,25 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
             if (!_bindings.ContainsKey(topic))
             {
-                return TryCreateBinding(topic, typeof(T), message, 5, 60);
+                return TryCreateBinding(topic, typeof(T), message, 5, 10); // TODO 60
             }
-            
+
             return _bindings[topic].SendAsync(message);
         }
 
         /// <summary>
-        /// Creates new Binding for topic in a safe way. If initial tries fail, it will fallback to intervaled retry's.
+        /// Creates new Binding for topic in a safe way. If initial tries fail, it will fallback to intervalled retrys.
         /// </summary>
         /// <param name="topic"></param>
         /// <param name="type"></param>
         /// <param name="message"></param>
         /// <param name="instantRecoveryTries"></param>
         /// <param name="lifeCycleRecoveryInterval"></param>
-        private async Task TryCreateBinding(string topic, Type type, object message, int instantRecoveryTries, int lifeCycleRecoveryInterval)
+        private Task TryCreateBinding(string topic, Type type, object message, int instantRecoveryTries, int lifeCycleRecoveryInterval)
         {
             CancellationTokenSource cancellation = new CancellationTokenSource();
             Binding binding;
             int lifeCycleTryCount = 0;
-            Task task;
 
             for (var i = 1; i <= instantRecoveryTries; i++)
             {
@@ -125,9 +128,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                     _logger.LogInformation(
                         $"TryCreateBinding: Binding successful ('{topic}', binding {i} of {instantRecoveryTries})");
                     _bindings.Add(topic, binding);
-                    task = _bindings[topic].SendAsync(message);
-                    await task;
-                    break;
+                    return _bindings[topic].SendAsync(message);
                 }
             }
 
@@ -135,8 +136,9 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 $"TryCreateBinding: Could not create binding in instantRecoveryTries tries ('{topic}', {instantRecoveryTries} tries). " +
                 $"Trying again every {lifeCycleRecoveryInterval} sec.");
 
-            await RepeatActionEvery(TryLifeCycleBinding, lifeCycleRecoveryInterval, cancellation.Token);
-            task = _bindings[topic].SendAsync(message);
+            RepeatActionEvery(TryLifeCycleBinding, lifeCycleRecoveryInterval, cancellation.Token)
+                .Wait();
+            return _bindings[topic].SendAsync(message);
 
             void TryLifeCycleBinding()
             {
@@ -152,7 +154,6 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                     cancellation.Cancel();
                 }
             }
-            await task;
         }
 
         private Binding TryBinding(string topic, Type type, object message)
