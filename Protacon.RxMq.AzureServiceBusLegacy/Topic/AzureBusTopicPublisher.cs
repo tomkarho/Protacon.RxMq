@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
@@ -109,10 +110,95 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
             var queueName = _settings.TopicNameBuilder(message.GetType());
 
             if (!_bindings.ContainsKey(queueName))
-                _bindings.Add(queueName, new Binding<T>(_factory, _namespaceManager, _settings, queueName
-                    , _logMessage, _logError));
+                return TryCreateBinding(queueName, typeof(T), message, 5, 60);
 
             return ((Binding<T>) _bindings[queueName]).SendAsync(message, queueName);
+        }
+
+        /// <summary>
+        /// Creates new Binding for topic in a safe way. If initial tries fail, it will fallback to intervalled retrys.
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <param name="type"></param>
+        /// <param name="message"></param>
+        /// <param name="instantRecoveryTries"></param>
+        /// <param name="lifeCycleRecoveryInterval"></param>
+        private Task TryCreateBinding<T>(string topic, Type type, T message, int instantRecoveryTries, int lifeCycleRecoveryInterval) where T : new()
+        {
+            CancellationTokenSource cancellation = new CancellationTokenSource();
+            int lifeCycleTryCount = 0;
+            var queueName = _settings.TopicNameBuilder(message.GetType());
+
+            for (var i = 1; i <= instantRecoveryTries; i++)
+            {
+                _logMessage($"TryCreateBinding: Try {i} of {instantRecoveryTries} for binding ('{topic}')");
+
+                var binding = TryBinding(topic, type, message);
+                if (binding != null)
+                {
+                    
+                    _logMessage($"TryCreateBinding: Binding successful ('{topic}', binding {i} of {instantRecoveryTries})");
+                    _bindings.Add(topic, binding);
+                    return ((Binding<T>) _bindings[queueName]).SendAsync(message, queueName);
+                }
+            }
+
+            _logMessage($"TryCreateBinding: Could not create binding in instantRecoveryTries tries ('{topic}', {instantRecoveryTries} tries). " +
+                $"Trying again every {lifeCycleRecoveryInterval} sec.");
+
+            RepeatActionEvery(TryLifeCycleBinding, lifeCycleRecoveryInterval, cancellation.Token)
+                .Wait();
+            return ((Binding<T>)_bindings[queueName]).SendAsync(message, queueName);
+
+            void TryLifeCycleBinding()
+            {
+                lifeCycleTryCount++;
+                _logMessage($"TryCreateBinding: Try {lifeCycleTryCount} of lifeCycleRecoveryInterval ('{topic}')");
+                var binding = TryBinding(topic, type, message);
+                if (binding != null)
+                {
+                    _logMessage($"TryCreateBinding: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval)");
+                    _bindings.Add(topic, binding);
+                    cancellation.Cancel();
+                }
+            }
+        }
+
+        private Binding<T> TryBinding<T>(string topic, Type type, T message) where T : new()
+        {
+            try
+            {
+                if (!_namespaceManager.TopicExists(topic))
+                {
+                    var queueDescription = new TopicDescription(topic);
+                    _namespaceManager.CreateTopic(_settings.TopicBuilderConfig(queueDescription, type));
+                }
+                var queueName = _settings.TopicNameBuilder(message.GetType());
+                return new Binding<T>(_factory, _namespaceManager, _settings, queueName
+                    , _logMessage, _logError);
+            }
+            catch (Exception e)
+            {
+                _logError($"TryCreateBinding: Calling recovery on topic '{topic}' for new Binding. Cause: error occurred {e}");
+                return null;
+            }
+        }
+
+        private async Task RepeatActionEvery(Action action, int interval, CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                action();
+                Task task = Task.Delay(TimeSpan.FromSeconds(interval), cancellationToken);
+                try
+                {
+                    await task;
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
+            }
         }
     }
 }
