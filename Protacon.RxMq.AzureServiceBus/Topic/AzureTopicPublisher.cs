@@ -93,7 +93,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
             if (!_bindings.ContainsKey(topic))
             {
-                return TryCreateBinding(topic, typeof(T), message, 5, 10); // TODO 60
+                return TryCreateBinding(topic, typeof(T), message, 5, 60);
             }
 
             return _bindings[topic].SendAsync(message);
