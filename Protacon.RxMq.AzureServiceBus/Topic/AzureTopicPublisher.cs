@@ -25,7 +25,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             private readonly TopicClient _topicClient;
             private readonly ILogger<AzureTopicPublisher> _logger;
             private readonly AzureBusTopicSettings _settings;
-
+            
             internal Binding(
                 AzureBusTopicSettings settings,
                 AzureBusTopicManagement queueManagement,
@@ -92,10 +92,8 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             var topic = _settings.TopicNameBuilder(message.GetType());
 
             if (!_bindings.ContainsKey(topic))
-            {
                 return TryCreateBinding(topic, typeof(T), message, 5, 60);
-            }
-
+            
             return _bindings[topic].SendAsync(message);
         }
 

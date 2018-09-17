@@ -100,7 +100,6 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
             _logMessage = logMessage;
             _logError = logError;
             _factory = MessagingFactory.CreateFromConnectionString(settings.ConnectionString);
-
             _namespaceManager =
                 NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
         }
@@ -136,7 +135,6 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 var binding = TryBinding(topic, type, message);
                 if (binding != null)
                 {
-                    
                     _logMessage($"TryCreateBinding: Binding successful ('{topic}', binding {i} of {instantRecoveryTries})");
                     _bindings.Add(topic, binding);
                     return ((Binding<T>) _bindings[queueName]).SendAsync(message, queueName);
@@ -174,8 +172,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                     _namespaceManager.CreateTopic(_settings.TopicBuilderConfig(queueDescription, type));
                 }
                 var queueName = _settings.TopicNameBuilder(message.GetType());
-                return new Binding<T>(_factory, _namespaceManager, _settings, queueName
-                    , _logMessage, _logError);
+                return new Binding<T>(_factory, _namespaceManager, _settings, queueName, _logMessage, _logError);
             }
             catch (Exception e)
             {
