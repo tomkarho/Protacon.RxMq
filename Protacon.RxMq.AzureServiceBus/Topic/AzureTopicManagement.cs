@@ -47,7 +47,5 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 _settings.AzureTopicBuilder(@namespace.Topics.Define(topicName), messageType);
             }
         }
-
-
     }
 }

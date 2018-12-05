@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Subjects;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,10 +20,14 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         private readonly AzureBusTopicManagement _queueManagement;
         private readonly ILogger<AzureTopicSubscriber> _logging;
         private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
+        
+        private readonly BlockingCollection<IBinding> _errorActions = new BlockingCollection<IBinding>(1);
+        private readonly CancellationTokenSource _source;
 
-        private class Binding<T>: IDisposable where T: new()
+        private class Binding<T>: IDisposable, IBinding where T: new()
         {
-            internal Binding(AzureBusTopicSettings settings, ILogger<AzureTopicSubscriber> logging, AzureBusTopicManagement queueManagement)
+            internal Binding(AzureBusTopicSettings settings, ILogger<AzureTopicSubscriber> logging,
+                AzureBusTopicManagement queueManagement, BlockingCollection<IBinding> errorActions)
             {
                 var topicName = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicName}.{settings.TopicSubscriberId}";
@@ -28,15 +35,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 queueManagement.CreateSubscriptionIfMissing(topicName, subscriptionName, typeof(T));
 
                 var subscriptionClient = new SubscriptionClient(settings.ConnectionString, topicName, subscriptionName);
-
-                subscriptionClient.GetRulesAsync()
-                    .Result
-                    .ToList()
-                    .ForEach(x => subscriptionClient.RemoveRuleAsync(x.Name).Wait());
-
-                settings.AzureSubscriptionRules
-                    .ToList()
-                    .ForEach(x => subscriptionClient.AddRuleAsync(x.Key, x.Value).Wait());
+                UpdateRules(subscriptionClient, settings);
 
                 subscriptionClient.RegisterMessageHandler(
                     async (message, _) =>
@@ -53,12 +52,39 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                         }
                         catch (Exception ex)
                         {
-                            logging.LogError($"Message {subscriptionName}': {message} -> consumer error: {ex}");
+                            logging.LogError(ex, $"Message {subscriptionName}': {message} -> consumer error: {ex}");
                         }
                     }, new MessageHandlerOptions(async e =>
                     {
-                        logging.LogError($"At route '{subscriptionName}' error occurred: {e.Exception}");
+                        logging.LogError(e.Exception, $"At route '{subscriptionName}' error occurred: {e.Exception}.");
+                        if (e.Exception is ServiceBusCommunicationException || e.Exception is MessagingEntityNotFoundException)
+                        {
+                            errorActions.Add(this);
+                        }
                     }));
+            }
+
+            public void ReCreate(AzureBusTopicSettings settings, AzureBusTopicManagement queueManagement)
+            {
+                var topicName = settings.TopicNameBuilder(typeof(T));
+                var subscriptionName = $"{topicName}.{settings.TopicSubscriberId}";
+
+                queueManagement.CreateSubscriptionIfMissing(topicName, subscriptionName, typeof(T));
+
+                var subscriptionClient = new SubscriptionClient(settings.ConnectionString, topicName, subscriptionName);
+                UpdateRules(subscriptionClient, settings);
+            }
+
+            private void UpdateRules(SubscriptionClient subscriptionClient, AzureBusTopicSettings settings)
+            {
+                subscriptionClient.GetRulesAsync()
+                    .Result
+                    .ToList()
+                    .ForEach(x => subscriptionClient.RemoveRuleAsync(x.Name).Wait());
+
+                settings.AzureSubscriptionRules
+                    .ToList()
+                    .ForEach(x => subscriptionClient.AddRuleAsync(x.Key, x.Value).Wait());
             }
 
             private static T AsObject(string body)
@@ -84,21 +110,55 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             _settings = settings.Value;
             _queueManagement = queueManagement;
             _logging = logging;
-        }
 
+            _source = new CancellationTokenSource();
+            Task.Factory.StartNew(() =>
+            {
+                while (!_source.IsCancellationRequested)
+                {
+                    try
+                    {
+                        var action = _errorActions.Take(_source.Token);
+                        try
+                        {
+                            action.ReCreate(_settings, _queueManagement);
+                        }
+                        catch (Exception exception)
+                        {
+                            logging.LogError(exception, "Unable to recreate subscription.");
+                        }
+                    }
+                    catch (OperationCanceledException exception)
+                    {
+                        _logging.LogDebug(exception, $"Stopping {nameof(AzureTopicSubscriber)}");
+                    }
+                    catch (Exception exception)
+                    {
+                        _logging.LogError(exception, "Something went wrong while doing error actions.");
+                    }
+                }
+            }, _source.Token);
+        }
+        
         public IObservable<T> Messages<T>() where T: new()
         {
             if(!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));
+                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement, _errorActions));
 
             return ((Binding<T>) _bindings[typeof(T)]).Subject;
         }
 
         public void Dispose()
         {
+            _source.Cancel();
             _bindings.Select(x => x.Value)
                 .ToList()
                 .ForEach(x => x.Dispose());
+        }
+
+        private interface IBinding
+        {
+            void ReCreate(AzureBusTopicSettings settings, AzureBusTopicManagement queueManagement);
         }
     }
 }
