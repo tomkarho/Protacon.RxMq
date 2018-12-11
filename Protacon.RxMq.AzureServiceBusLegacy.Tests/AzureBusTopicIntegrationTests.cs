@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reactive.Linq;
+using System.Threading;
 using FluentAssertions;
+using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using Protacon.RxMq.AzureServiceBusLegacy.Tests.Messages;
 using Protacon.RxMq.AzureServiceBusLegacy.Topic;
@@ -78,8 +80,70 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
         }
 
         [Fact]
-        public void WhenMultipleThreadsAreWriting_ThenSubscribingWorksAsExpected()
+        public async void WhenTopicIsRemoved_ThenTopicIsCreatedAgain()
         {
+            var settings = TestSettings.MqSettingsForTopic();
+
+            var subscriber = new AzureBusTopicSubscriber(settings, _ => { }, _ => { });
+            var publisher = new AzureBusTopicPublisher(settings, _ => { }, _ => throw new InvalidOperationException("Errorlogger"));
+
+            var id = Guid.NewGuid();
+            var listener = subscriber.Messages<TestMessageForTopic>();
+
+
+            var name = settings.TopicNameBuilder(typeof(TestMessageForTopic));
+            var nameSpace = NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
+            var topic = await nameSpace.GetTopicAsync(name);
+            topic.Should().NotBeNull("Topic should exist at this point");
+
+            await nameSpace.DeleteTopicAsync(name);
+
+            Thread.Sleep(TimeSpan.FromSeconds(30));
+
+            await publisher.SendAsync(new TestMessageForTopic
+            {
+                ExampleId = id
+            });
+
+            await listener
+                .Where(x => x.ExampleId == id)
+                .Timeout(TimeSpan.FromSeconds(30))
+                .FirstAsync();
+        }
+
+        [Fact]
+        public async void WhenSusbcriptionIsRemoved_ThenSubscriptionIsCreatedAgain()
+        {
+            var settings = TestSettings.MqSettingsForTopic();
+
+            var subscriber = new AzureBusTopicSubscriber(settings, _ => { }, _ => { });
+            var publisher = new AzureBusTopicPublisher(settings, _ => { }, _ => throw new InvalidOperationException("Errorlogger"));
+
+            var id = Guid.NewGuid();
+            var listener = subscriber.Messages<TestMessageForTopic>();
+
+
+            var name = settings.TopicNameBuilder(typeof(TestMessageForTopic));
+            var nameSpace = NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
+            var topic = await nameSpace.GetTopicAsync(name);
+
+            var subscriptions = await nameSpace.GetSubscriptionsAsync(topic.Path);
+            foreach (var subscriptionDescription in subscriptions)
+            {
+                await nameSpace.DeleteSubscriptionAsync(topic.Path, subscriptionDescription.Name);
+            }
+
+            Thread.Sleep(TimeSpan.FromSeconds(30));
+
+            await publisher.SendAsync(new TestMessageForTopic
+            {
+                ExampleId = id
+            });
+
+            await listener
+                .Where(x => x.ExampleId == id)
+                .Timeout(TimeSpan.FromSeconds(30))
+                .FirstAsync();
         }
     }
 }

@@ -1,8 +1,10 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reactive.Subjects;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using Newtonsoft.Json.Linq;
@@ -16,16 +18,25 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
         private readonly Action<string> _logMessage;
         private readonly Action<string> _logError;
 
-        private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
+        private readonly ConcurrentDictionary<Type, IDisposable> _bindings = new ConcurrentDictionary<Type, IDisposable>();
         private readonly MessagingFactory _factory;
         private readonly NamespaceManager _namespaceManager;
 
-        private class Binding<T> : IDisposable where T : new()
+        private readonly BlockingCollection<IBinding> _errorActions = new BlockingCollection<IBinding>(1);
+        private readonly CancellationTokenSource _source;
+
+        private class Binding<T> : IDisposable, IBinding where T : new()
         {
             private readonly SubscriptionClient _receiver;
+            private readonly OnMessageOptions _options;
 
-            internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, AzureTopicMqSettings settings, Action<string> logMessage, Action<string> logError)
+            private readonly BlockingCollection<IBinding> _errorActions;
+            private readonly Action<string> _logError;
+
+            internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, AzureTopicMqSettings settings, BlockingCollection<IBinding> errorActions, Action<string> logMessage, Action<string> logError)
             {
+                _errorActions = errorActions;
+                _logError = logError;
                 var topicPath = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicPath}.{settings.TopicSubscriberId}";
 
@@ -48,6 +59,9 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                     .ToList()
                     .ForEach(x => _receiver.AddRule(x.Key, x.Value));
 
+                _options = new OnMessageOptions { AutoComplete = true };
+                _options.ExceptionReceived += OptionsOnExceptionReceived;
+
                 _receiver.OnMessage(message =>
                 {
                     try
@@ -67,13 +81,51 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                     {
                         logError($"Message {topicPath}': {message} -> consumer error: {ex}");
                     }
-                }, new OnMessageOptions { AutoComplete = true });
+                }, _options);
+            }
+
+            private void OptionsOnExceptionReceived(object sender, ExceptionReceivedEventArgs exceptionEventArgs)
+            {
+                _logError($"Action '{exceptionEventArgs.Action}' caused exception {exceptionEventArgs.Exception}.");
+                if (exceptionEventArgs.Exception is MessagingEntityNotFoundException)
+                {
+                    _errorActions.Add(this);
+                }
+            }
+
+            public void ReCreate(AzureTopicMqSettings settings, NamespaceManager namespaceManager)
+            {
+                var topicPath = settings.TopicNameBuilder(typeof(T));
+                var subscriptionName = $"{topicPath}.{settings.TopicSubscriberId}";
+
+                if (!namespaceManager.TopicExists(topicPath))
+                {
+                    var queueDescription = new TopicDescription(topicPath);
+                    namespaceManager.CreateTopic(settings.TopicBuilderConfig(queueDescription, typeof(T)));
+                }
+
+                if (!namespaceManager.SubscriptionExists(topicPath, subscriptionName))
+                {
+                    var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
+                    namespaceManager.CreateSubscription(settings.SubscriptionBuilderConfig(subscriptionDescription, typeof(T)));
+                }
+                UpdateRules(settings);
+            }
+
+            private void UpdateRules(AzureTopicMqSettings settings)
+            {
+                _receiver.RemoveRule("$default");
+
+                settings.AzureSubscriptionRules
+                    .ToList()
+                    .ForEach(x => _receiver.AddRule(x.Key, x.Value));
             }
 
             public ReplaySubject<T> Subject { get; } = new ReplaySubject<T>(TimeSpan.FromSeconds(30));
 
             public void Dispose()
             {
+                _options.ExceptionReceived -= OptionsOnExceptionReceived;
                 Subject?.Dispose();
                 _receiver.Close();
             }
@@ -88,21 +140,57 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
 
             _namespaceManager =
                 NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
+
+            _source = new CancellationTokenSource();
+            Task.Factory.StartNew(() =>
+            {
+                while (!_source.IsCancellationRequested)
+                {
+                    try
+                    {
+                        var action = _errorActions.Take(_source.Token);
+                        try
+                        {
+                            action.ReCreate(_settings, _namespaceManager);
+                        }
+                        catch (Exception exception)
+                        {
+                            logError($"Unable to recreate subscription. {exception}");
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        logError($"Stopping {nameof(AzureBusTopicSubscriber)}");
+                    }
+                    catch (Exception exception)
+                    {
+                        logError($"Something went wrong while doing error actions ${exception}.");
+                    }
+                }
+            }, _source.Token);
         }
 
         public IObservable<T> Messages<T>() where T : new()
         {
             if (!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_factory, _namespaceManager, _settings, _logMessage, _logError));
+            {
+                _bindings.TryAdd(typeof(T), new Binding<T>(_factory, _namespaceManager, _settings, _errorActions, _logMessage, _logError));
+            }
 
             return ((Binding<T>)_bindings[typeof(T)]).Subject;
         }
 
         public void Dispose()
         {
+            _source.Cancel();
             _bindings.Select(x => x.Value)
                 .ToList()
                 .ForEach(x => x.Dispose());
+        }
+
+        private interface IBinding
+        {
+            void ReCreate(AzureTopicMqSettings settings, NamespaceManager namespaceManager);
         }
     }
 }

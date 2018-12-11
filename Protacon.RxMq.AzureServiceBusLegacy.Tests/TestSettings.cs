@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Microsoft.ServiceBus.Messaging;
 using Newtonsoft.Json.Linq;
 using Protacon.RxMq.AzureServiceBusLegacy.Queue;
 using Protacon.RxMq.AzureServiceBusLegacy.Topic;
@@ -45,8 +46,14 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
                                    ?? Environment.GetEnvironmentVariable("ConnectionString") ??
                                    throw new InvalidOperationException("Missing secrets."),
                 TopicSubscriberId = Guid.NewGuid().ToString().Substring(0, 12),
-                TopicNameBuilder = _ => topicName.Substring(0, 12)
-            };
+                TopicNameBuilder = _ => topicName.Substring(0, 12),
+                TopicBuilderConfig = (topicDescription, type) =>
+                {
+                    topicDescription.AutoDeleteOnIdle = TimeSpan.FromMinutes(30);
+                    topicDescription.DefaultMessageTimeToLive = TimeSpan.FromSeconds(60);
+                    return topicDescription;
+                }
+        };
         }
     }
 }
