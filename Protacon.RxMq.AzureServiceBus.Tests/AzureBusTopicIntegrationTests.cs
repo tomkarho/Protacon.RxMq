@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Reactive.Concurrency;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
 using FluentAssertions;
+using Microsoft.Azure.Management.ServiceBus.Fluent;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -86,8 +87,35 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
         }
 
         [Fact]
-        public void WhenMultipleThreadsAreWriting_ThenSubscribingWorksAsExpected()
+        public async void WhenTopicIsRemoved_ThenTopicIsCreatedAgain()
         {
+            var settings = TestSettings.TopicSettingsOptions();
+
+            var subscriber = new AzureTopicSubscriber(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicSubscriber>>());
+            var publisher = new AzureTopicPublisher(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
+
+            var id = Guid.NewGuid();
+            var listener = subscriber.Messages<TestMessageForTopic>();
+
+            var message = new TestMessageForTopic
+            {
+                ExampleId = id
+            };
+
+            var nameSpace = NamespaceUtils.GetNamespace(settings.Value);
+            var topic = await nameSpace.Topics.GetByNameAsync(message.TopicName);
+            topic.Should().NotBeNull("Topic should exist at this point");
+
+            await nameSpace.Topics.DeleteByNameAsync(message.TopicName);
+
+            Thread.Sleep(TimeSpan.FromSeconds(30));
+
+            await publisher.SendAsync(message);
+
+            await listener
+                .Where(x => x.ExampleId == id)
+                .Timeout(TimeSpan.FromSeconds(30))
+                .FirstAsync();
         }
     }
 }
