@@ -19,7 +19,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         private readonly AzureBusTopicSettings _settings;
         private readonly AzureBusTopicManagement _queueManagement;
         private readonly ILogger<AzureTopicSubscriber> _logging;
-        private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
+        private readonly ConcurrentDictionary<Type, IDisposable> _bindings = new ConcurrentDictionary<Type, IDisposable>();
         
         private readonly BlockingCollection<IBinding> _errorActions = new BlockingCollection<IBinding>(1);
         private readonly CancellationTokenSource _source;
@@ -142,8 +142,10 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         
         public IObservable<T> Messages<T>() where T: new()
         {
-            if(!_bindings.ContainsKey(typeof(T)))
-                _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement, _errorActions));
+            if (!_bindings.ContainsKey(typeof(T)))
+            {
+                _bindings.TryAdd(typeof(T), new Binding<T>(_settings, _logging, _queueManagement, _errorActions));
+            }
 
             return ((Binding<T>) _bindings[typeof(T)]).Subject;
         }
