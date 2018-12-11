@@ -40,17 +40,8 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 var topicPath = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicPath}.{settings.TopicSubscriberId}";
 
-                if (!namespaceManager.TopicExists(topicPath))
-                {
-                    var queueDescription = new TopicDescription(topicPath);
-                    namespaceManager.CreateTopic(settings.TopicBuilderConfig(queueDescription, typeof(T)));
-                }
-
-                if (!namespaceManager.SubscriptionExists(topicPath, subscriptionName))
-                {
-                    var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
-                    namespaceManager.CreateSubscription(settings.SubscriptionBuilderConfig(subscriptionDescription, typeof(T)));
-                }
+                MakeSureTopicExists(namespaceManager, settings, topicPath);
+                MakeSureSubscriptionExists(namespaceManager, settings, topicPath, subscriptionName);
 
                 _receiver = messagingFactory.CreateSubscriptionClient(topicPath, subscriptionName);
                 _receiver.RemoveRule("$default");
@@ -84,6 +75,26 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 }, _options);
             }
 
+            private static void MakeSureSubscriptionExists(NamespaceManager namespaceManager, AzureTopicMqSettings settings,
+                string topicPath, string subscriptionName)
+            {
+                if (!namespaceManager.SubscriptionExists(topicPath, subscriptionName))
+                {
+                    var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
+                    namespaceManager.CreateSubscription(settings.SubscriptionBuilderConfig(subscriptionDescription, typeof(T)));
+                }
+            }
+
+            private static void MakeSureTopicExists(NamespaceManager namespaceManager, AzureTopicMqSettings settings,
+                string topicPath)
+            {
+                if (!namespaceManager.TopicExists(topicPath))
+                {
+                    var queueDescription = new TopicDescription(topicPath);
+                    namespaceManager.CreateTopic(settings.TopicBuilderConfig(queueDescription, typeof(T)));
+                }
+            }
+
             private void OptionsOnExceptionReceived(object sender, ExceptionReceivedEventArgs exceptionEventArgs)
             {
                 _logError($"Action '{exceptionEventArgs.Action}' caused exception {exceptionEventArgs.Exception}.");
@@ -97,18 +108,8 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
             {
                 var topicPath = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicPath}.{settings.TopicSubscriberId}";
-
-                if (!namespaceManager.TopicExists(topicPath))
-                {
-                    var queueDescription = new TopicDescription(topicPath);
-                    namespaceManager.CreateTopic(settings.TopicBuilderConfig(queueDescription, typeof(T)));
-                }
-
-                if (!namespaceManager.SubscriptionExists(topicPath, subscriptionName))
-                {
-                    var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
-                    namespaceManager.CreateSubscription(settings.SubscriptionBuilderConfig(subscriptionDescription, typeof(T)));
-                }
+                MakeSureTopicExists(namespaceManager, settings, topicPath);
+                MakeSureSubscriptionExists(namespaceManager, settings, topicPath, subscriptionName);
                 UpdateRules(settings);
             }
 
