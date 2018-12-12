@@ -40,8 +40,14 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             var config = new AzureBusTopicSettings
             {
                 // This makes running machine looks like unique on every test.
-                TopicSubscriberId = Guid.NewGuid().ToString()
-            };
+                TopicSubscriberId = Guid.NewGuid().ToString(),
+                AzureSubscriptionBuilder = (subcription, type) =>
+                {
+                    subcription
+                        .WithDeleteOnIdleDurationInMinutes(30)
+                        .Create();
+                }
+        };
             LoadCommonSettings(config);
             return config;
         }

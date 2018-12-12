@@ -30,7 +30,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
             private readonly MessagingFactory _messagingFactory;
             private readonly Action<string> _logMessage;
             private readonly Action<string> _logError;
-            private AzureTopicMqSettings _azureTopicMqSettings;
+            private readonly AzureTopicMqSettings _azureTopicMqSettings;
 
             internal Binding(
                 MessagingFactory messagingFactory,
