@@ -98,7 +98,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
             private void OptionsOnExceptionReceived(object sender, ExceptionReceivedEventArgs exceptionEventArgs)
             {
                 _logError($"Action '{exceptionEventArgs.Action}' caused exception {exceptionEventArgs.Exception}.");
-                if (exceptionEventArgs.Exception is MessagingEntityNotFoundException)
+                if (exceptionEventArgs.Exception is MessagingEntityNotFoundException || exceptionEventArgs.Exception is MessagingCommunicationException)
                 {
                     _errorActions.Add(this);
                 }
