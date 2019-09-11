@@ -65,8 +65,6 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                         }
                     );
 
-                _logMessage($"{nameof(SendAsync)} sending message '{body}'");
-
                 var bytes = Encoding.UTF8.GetBytes(body);
                 var stream = new MemoryStream(bytes, writable: false);
 
@@ -78,6 +76,8 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 _azureTopicMqSettings.AzureMessagePropertyBuilder(message)
                     .ToList()
                     .ForEach(x => brokeredMessage.Properties.Add(x.Key, x.Value));
+
+                _logMessage($"{nameof(SendAsync)} sending message '{body}' with Azure MessageId: '{brokeredMessage.MessageId}'");
 
                 return sender.SendAsync(brokeredMessage)
                     .ContinueWith(task =>

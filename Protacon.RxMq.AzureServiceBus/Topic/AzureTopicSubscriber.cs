@@ -44,7 +44,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                         {
                             var body = Encoding.UTF8.GetString(message.Body);
 
-                            logging.LogInformation($"Received '{subscriptionName}': {body}");
+                            logging.LogInformation($"Received '{subscriptionName}': {body} with Azure MessageId: '{message.MessageId}'");
 
                             var asObject = AsObject(body);
 
