@@ -38,7 +38,13 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 _logger = logger;
                 _settings = settings;
                 queueManagement.CreateTopicIfMissing(topic, type);
-                _topicClient = new TopicClient(settings.ConnectionString, topic);
+                
+                var retryPolicy = new RetryExponential(
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromSeconds(30),
+                    3
+                );
+                _topicClient = new TopicClient(settings.ConnectionString, topic, retryPolicy);
                 _logger.LogInformation($"Created new MQ binding '{topic}'.");
             }
 
