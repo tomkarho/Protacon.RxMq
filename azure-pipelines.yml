@@ -8,6 +8,7 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
 
 steps:
 - task: NuGetToolInstaller@1
@@ -29,27 +30,30 @@ steps:
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Abstractions library'
+  condition: '$(isTagBuild)'
   inputs:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.Abstractions/Protacon.RxMq.Abstractions.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.Abstractions'
     versioningScheme: 'byEnvVar'
-    versionEnvVar: 'BUILD_SOURCEBRANCH'
+    versionEnvVar: 'BUILD_SOURCEBRANCHNAME'
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Legacy library'
+  condition: '$(isTagBuild)'
   inputs:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBusLegacy/Protacon.RxMq.AzureServiceBusLegacy.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.AzureServiceBusLegacy'
     versioningScheme: 'byEnvVar'
-    versionEnvVar: 'BUILD_SOURCEBRANCH'
+    versionEnvVar: 'BUILD_SOURCEBRANCHNAME'
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Modern library'
+  condition: '$(isTagBuild)'
   inputs:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBus/Protacon.RxMq.AzureServiceBus.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.AzureServiceBus'
     versioningScheme: 'byEnvVar'
-    versionEnvVar: 'BUILD_SOURCEBRANCH'
+    versionEnvVar: 'BUILD_SOURCEBRANCHNAME'
