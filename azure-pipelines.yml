@@ -33,6 +33,7 @@ steps:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.Abstractions/Protacon.RxMq.Abstractions.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.Abstractions'
+    versionEnvVar: '$(Build.SourceBranch)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Legacy library'
@@ -40,6 +41,7 @@ steps:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBusLegacy/Protacon.RxMq.AzureServiceBusLegacy.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.AzureServiceBusLegacy'
+    versionEnvVar: '$(Build.SourceBranch)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Modern library'
@@ -47,3 +49,4 @@ steps:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBus/Protacon.RxMq.AzureServiceBus.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.AzureServiceBus'
+    versionEnvVar: '$(Build.SourceBranch)'
