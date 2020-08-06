@@ -30,7 +30,7 @@ steps:
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Abstractions library'
-  condition: $(isTagBuild)
+  condition: variables['isTagBuild']
   inputs:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.Abstractions/Protacon.RxMq.Abstractions.csproj'
@@ -40,7 +40,7 @@ steps:
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Legacy library'
-  condition: $(isTagBuild)
+  condition: variables['isTagBuild']
   inputs:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBusLegacy/Protacon.RxMq.AzureServiceBusLegacy.csproj'
@@ -50,7 +50,7 @@ steps:
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Modern library'
-  condition: $(isTagBuild)
+  condition: variables['isTagBuild']
   inputs:
     command: 'pack'
     packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBus/Protacon.RxMq.AzureServiceBus.csproj'
