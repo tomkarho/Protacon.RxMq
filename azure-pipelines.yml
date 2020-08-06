@@ -35,7 +35,7 @@ steps:
     configuration: '$(buildConfiguration)'
 
 - task: NuGetCommand@2
-displayName: 'Pack Modern library'
+  displayName: 'Pack Modern library'
   inputs:
     command: 'pack'
     packagesToPack: 'Protacon.RxMq.AzureServiceBus.csproj/Protacon.RxMq.AzureServiceBus.csproj.csproj'
