@@ -11,6 +11,11 @@ variables:
   isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
 
 steps:
+- task: PowerShell@2
+  inputs:
+    targetType: 'filePath'
+    filePath: '$(Build.SourcesDirectory)/Build.ps1'
+
 - task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
