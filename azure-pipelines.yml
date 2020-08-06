@@ -36,3 +36,8 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: 'Protacon.RxMq.AzureServiceBusLegacy.csproj/Protacon.RxMq.AzureServiceBusLegacy.csproj.csproj'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: 'Protacon.RxMq.AzureServiceBus.csproj/Protacon.RxMq.AzureServiceBus.csproj.csproj'
