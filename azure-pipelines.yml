@@ -28,15 +28,22 @@ steps:
     configuration: '$(buildConfiguration)'
 
 - task: NuGetCommand@2
+  displayName: 'Pack Abstractions library'
+  inputs:
+    command: 'pack'
+    packagesToPack: 'Protacon.RxMq.Abstractions.csproj/Protacon.RxMq.Abstractionsj.csproj'
+    configuration: '$(buildConfiguration)'
+
+- task: NuGetCommand@2
   displayName: 'Pack Legacy library'
   inputs:
     command: 'pack'
-    packagesToPack: 'Protacon.RxMq.AzureServiceBusLegacy.csproj/Protacon.RxMq.AzureServiceBusLegacy.csproj.csproj'
+    packagesToPack: 'Protacon.RxMq.AzureServiceBusLegacy/Protacon.RxMq.AzureServiceBusLegacy.csproj'
     configuration: '$(buildConfiguration)'
 
 - task: NuGetCommand@2
   displayName: 'Pack Modern library'
   inputs:
     command: 'pack'
-    packagesToPack: 'Protacon.RxMq.AzureServiceBus.csproj/Protacon.RxMq.AzureServiceBus.csproj.csproj'
+    packagesToPack: 'Protacon.RxMq.AzureServiceBus/Protacon.RxMq.AzureServiceBus.csproj'
     configuration: '$(buildConfiguration)'
