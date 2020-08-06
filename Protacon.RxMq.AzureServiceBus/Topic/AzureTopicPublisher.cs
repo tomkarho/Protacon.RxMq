@@ -40,9 +40,9 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 queueManagement.CreateTopicIfMissing(topic, type);
                 
                 var retryPolicy = new RetryExponential(
-                    TimeSpan.FromSeconds(int.Parse(settings.AzureRetryMinimumBackoff)),
-                    TimeSpan.FromSeconds(int.Parse(settings.AzureRetryMaximumBackoff)),
-                    int.Parse(settings.AzureMaximumRetryCount)
+                    TimeSpan.FromSeconds(settings.AzureRetryMinimumBackoff),
+                    TimeSpan.FromSeconds(settings.AzureRetryMaximumBackoff),
+                    settings.AzureMaximumRetryCount
                 );
                 _topicClient = new TopicClient(settings.ConnectionString, topic, retryPolicy);
                 _logger.LogInformation($"Created new MQ binding '{topic}'.");

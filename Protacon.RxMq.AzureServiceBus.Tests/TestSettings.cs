@@ -66,9 +66,9 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 baseConfig.AzureNamespace = config.GetConfig("AzureNamespace");
                 baseConfig.AzureResourceGroup = config.GetConfig("AzureResourceGroup");
                 baseConfig.AzureSubscriptionId = config.GetConfig("AzureSubscriptionId");
-                baseConfig.AzureRetryMinimumBackoff = config.GetConfig("AzureRetryMinimumBackoff");
-                baseConfig.AzureRetryMaximumBackoff = config.GetConfig("AzureRetryMaximumBackoff");
-                baseConfig.AzureMaximumRetryCount = config.GetConfig("AzureMaximumRetryCount");
+                baseConfig.AzureRetryMinimumBackoff =  int.Parse(config.GetConfig("AzureRetryMinimumBackoff"));
+                baseConfig.AzureRetryMaximumBackoff = int.Parse(config.GetConfig("AzureRetryMaximumBackoff"));
+                baseConfig.AzureMaximumRetryCount =  int.Parse(config.GetConfig("AzureMaximumRetryCount"));
         }
 
         private static string GetConfig(this IConfigurationRoot root, string name)
