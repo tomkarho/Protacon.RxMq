@@ -31,19 +31,19 @@ steps:
   displayName: 'Pack Abstractions library'
   inputs:
     command: 'pack'
-    packagesToPack: 'Protacon.RxMq.Abstractions.csproj/Protacon.RxMq.Abstractions.csproj'
+    packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.Abstractions/Protacon.RxMq.Abstractions.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.Abstractions'
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Legacy library'
   inputs:
     command: 'pack'
-    packagesToPack: 'Protacon.RxMq.AzureServiceBusLegacy/Protacon.RxMq.AzureServiceBusLegacy.csproj'
+    packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBusLegacy/Protacon.RxMq.AzureServiceBusLegacy.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.AzureServiceBusLegacy'
 
 - task: DotNetCoreCLI@2
   displayName: 'Pack Modern library'
   inputs:
     command: 'pack'
-    packagesToPack: 'Protacon.RxMq.AzureServiceBus/Protacon.RxMq.AzureServiceBus.csproj'
+    packagesToPack: '$(Build.SourcesDirectory)/Protacon.RxMq.AzureServiceBus/Protacon.RxMq.AzureServiceBus.csproj'
     outputDir: '$(Build.ArtifactStagingDirectory)/Protacon.RxMq.AzureServiceBus'
