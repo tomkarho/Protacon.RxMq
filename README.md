@@ -10,6 +10,7 @@ Abstraction over common MQ channels with Rx.NET. Provides customizable messaging
 ## Messages
 
 Example message implementation (`ITopic` mechanic can be overwritten, it's just default behavior.)
+
 ```csharp
 public class TestMessageForTopic: ITopic
 {
@@ -53,7 +54,21 @@ Configure `AzureQueueMqSettings`, there are configuration methods which can be o
 
 Requires NET core 2.x. and .NET Framework SDK 4.5 and 4.6.1
 
-Setup settings required in `AzureMqSettingsBase` with environment variables or client-secrets.json file.
+Setting up test environment
+
+1. Create Application in Azure Active Directory
+1. Create configuration files
+    1. Create a copy of `developer-settings.example.json` with name `developer-settings.json`
+    1. Replace `developer-settings.json` content with correct values
+1. Create testing environment
+    1. Run `Testing/Prepare-Environment.ps1` (see script for detailed
+    documentation)
+1. Create client secrets
+    1. Run `Create-CrientSecrets.ps1`
+
+After running these steps, you should have a Service Bus in Azure and
+`client-secrets.json` -file for testing. Environment variables can also be used
+for configurations. See `AzureMqSettingsBase` for required configurations.
 
 ```bash
 dotnet restore
