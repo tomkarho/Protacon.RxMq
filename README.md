@@ -77,5 +77,3 @@ note: You must have nuget credentials added to 'Protacon Nuget packages' repo to
 3. In rootfolder: Run dotnet pack .\Protacon.RxMq.PLACEPROJECTFOLDERHERE\Protacon.RxMq.PLACEPROJECTHERE.csproj -c Release -o .\Protacon.RxMq.PLACEPROJECTFOLDERHERE\artifacts /p:Version=x.x.x  (vesion same as github release number)
 4. Create ApiKey in Nuget Gallery (owner Protacon, select RxMq packages)
 5. In artifacts folder publish to nuget.org: dotnet nuget push Protacon.RxMq.PACKETPROJECT.x.x.x.nupkg --api-key YOURAPIKEY --source https://api.nuget.org/v3/index.json
-
-3. Run dotnet nuget push 
