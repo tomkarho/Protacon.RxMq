@@ -68,3 +68,12 @@ In powershell, this can be done with
 ```powershell
 $env:ReferenceAssemblyRoot = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework'
 ```
+## Creating and publishing nuget packages by hand if needed
+
+note: You must have nuget credentials added to 'Protacon Nuget packages' repo to be able to do next steps
+
+1. Make new release in Github with next version number and add description what is being changed
+2. Create folder artifacts in same forlder where csproj to be published is located
+3. In rootfolder: Run dotnet pack .\Protacon.RxMq.PLACEPROJECTFOLDERHERE\Protacon.RxMq.PLACEPROJECTHERE.csproj -c Release -o .\Protacon.RxMq.PLACEPROJECTFOLDERHERE\artifacts /p:Version=x.x.x  (vesion same as github release number)
+4. Create ApiKey in Nuget Gallery (owner Protacon, select RxMq packages)
+5. In artifacts folder publish to nuget.org: dotnet nuget push Protacon.RxMq.PACKETPROJECT.x.x.x.nupkg --api-key YOURAPIKEY --source https://api.nuget.org/v3/index.json
