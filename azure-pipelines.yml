@@ -12,7 +12,7 @@ variables:
 
 steps:
 - task: DotNetCoreCLI@2
-  displayName: build solutions
+  displayName: restore
   inputs:
     command: 'restore'
     feedsToUse: 'select'
