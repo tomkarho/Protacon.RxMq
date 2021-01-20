@@ -31,6 +31,6 @@ New-AzResourceGroup -Name $settingsJson.ResourceGroupName -Location $settingsJso
 Write-Host 'Creating environment...'
 New-AzResourceGroupDeployment `
     -Name 'test-deployment' `
-    -TemplateFile 'Testing/azuredeploy.json' `
+    -TemplateFile './azuredeploy.json' `
     -ResourceGroupName $settingsJson.ResourceGroupName `
     -serviceBusName $settingsJson.ResourceGroupName `
