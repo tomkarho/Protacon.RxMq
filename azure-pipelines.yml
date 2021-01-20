@@ -11,7 +11,16 @@ variables:
   isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
 
 steps:
-- task: PowerShell@2
+- task: DotNetCoreCLI@2
+  displayName: restore
   inputs:
-    targetType: 'filePath'
-    filePath: '$(Build.SourcesDirectory)/Build.ps1'
+    command: 'restore'
+    feedsToUse: 'select'
+
+- task: DotNetCoreCLI@2
+  displayName: build solutions
+  inputs:
+    command: 'build'
+    
+
+    
