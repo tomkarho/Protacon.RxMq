@@ -27,13 +27,15 @@ steps:
   displayName: fetch development settings
   inputs:
     secureFile: 'developer-settings.json'
-
-- task: PowerShell@2
-  inputs:
-    targetType: 'filePath'
-    filePath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
-    arguments: 
-      -settingsFile $(devSettings.secureFilePath)
+- task: AzurePowerShell@4
   displayName: 'create environment'
+  inputs:
+    azureSubscription: my-arm-service-connection
+    scriptType: filePath
+    scriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
+    scriptArguments:
+      -settingsFile $(devSettings.secureFilePath)
+    azurePowerShellVersion: latestVersion
+
 
     
