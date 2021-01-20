@@ -21,6 +21,19 @@ steps:
   displayName: build solutions
   inputs:
     command: 'build'
-    
+
+- task: DownloadSEcureFile@1
+  name: devSettings
+  displayName: fetch development settings
+  inputs:
+    secureFile: 'development-settings.json'
+
+- task: PowerShell@2
+  inputs:
+    targetType: 'filePath'
+    filePath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
+    arguments: 
+      -settingsFile $(devSettings.secureFilePath)
+  displayName: 'create environment'
 
     
