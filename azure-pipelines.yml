@@ -29,10 +29,20 @@ steps:
     secureFile: 'developer-settings.json'
 
 - task: AzurePowerShell@5
+  displayName: create environment
   inputs:
     azureSubscription: 'Development-use'
     ScriptType: 'FilePath'
     ScriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
+    ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
+    azurePowerShellVersion: 'LatestVersion'
+    
+- task: AzurePowerShell@5
+  displayName: create secrets
+  inputs:
+    azureSubscription: 'Development-use'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Build.SourcesDirectory)/Create-ClientSecrets.ps1'
     ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
     azurePowerShellVersion: 'LatestVersion'
     
