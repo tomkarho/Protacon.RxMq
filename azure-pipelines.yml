@@ -36,6 +36,11 @@ steps:
     ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
     azurePowerShellVersion: 'LatestVersion'
     
+- task: DotNetCoreCLI@2
+  inputs:
+    command: test
+    projects: '**/*test*.csproj'
+    
 
     
   
