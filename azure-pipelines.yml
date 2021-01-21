@@ -30,7 +30,7 @@ steps:
 
 - task: AzurePowerShell@5
   inputs:
-    azureSubscription: 'Markun Azure leikkirahat'
+    azureSubscription: 'Development-use'
     ScriptType: 'FilePath'
     ScriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
     ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
