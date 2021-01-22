@@ -46,12 +46,23 @@ steps:
     ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
     azurePowerShellVersion: 'LatestVersion'
     
-
-- task: VSTest@2
+- task: DotNetCoreCLI@2
   displayName: tests
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: test
+    projects: '**/*AzureServiceBus.test*.csproj'
+    
+- task: VSTest@2
+  inputs:
+    testSelector: 'testAssemblies'
+    testAssemblyVer2: |
+      **\*test*.dll
+      !**\*TestAdapter.dll
+      !**\obj\**
+    searchFolder: '$(System.DefaultWorkingDirectory)/Protacon.RxMq.AzureServiceBusLegacy.Tests'
+
+
+
 
     
 
