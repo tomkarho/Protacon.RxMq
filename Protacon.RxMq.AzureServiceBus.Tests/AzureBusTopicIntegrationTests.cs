@@ -35,6 +35,9 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .FirstAsync();
         }
 
+
+        // testi joka heittää poikkeuksen ja kutsuu uudestaan send async
+
         [Fact]
         public async void WhenFiltersAreSet_ThenDontReturnInvalidTenantMessages()
         {
