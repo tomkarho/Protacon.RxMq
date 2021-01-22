@@ -2,7 +2,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'vs2017-win2016'
 
 variables:
   solution: '**/*.sln'
@@ -47,6 +47,7 @@ steps:
     azurePowerShellVersion: 'LatestVersion'
     
 - task: DotNetCoreCLI@2
+  displayName: tests
   inputs:
     command: test
     projects: '**/*test*.csproj'
