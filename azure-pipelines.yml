@@ -50,19 +50,16 @@ steps:
   displayName: tests
   inputs:
     command: test
-    projects: '**/*AzureServiceBus.test*.csproj'
+    projects: '**/*test*.csproj'
     
-- task: VSTest@2
+
+
+- task: AzurePowerShell@5
   inputs:
-    testSelector: 'testAssemblies'
-    testAssemblyVer2: |
-      **\*test*.dll
-      !**\*TestAdapter.dll
-      !**\obj\**
-    searchFolder: '$(System.DefaultWorkingDirectory)/Protacon.RxMq.AzureServiceBusLegacy.Tests'
-
-
-
+    azureSubscription: 'Development-use'
+    ScriptType: 'InlineScript'
+    Inline: 'Remove-AzResourceGroup -Name RxMqTestEnvironment'
+    azurePowerShellVersion: 'LatestVersion'
 
     
 
