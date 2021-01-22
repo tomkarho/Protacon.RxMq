@@ -46,11 +46,13 @@ steps:
     ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
     azurePowerShellVersion: 'LatestVersion'
     
-- task: DotNetCoreCLI@2
+
+- task: VSTest@2
   displayName: tests
   inputs:
-    command: test
-    projects: '**/*test*.csproj'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
     
 
     
