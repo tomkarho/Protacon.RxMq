@@ -25,3 +25,4 @@ $output = @{
 }
 
 $output | ConvertTo-Json -depth 100 | Out-File "Protacon.RxMq.AzureServiceBus.Tests\client-secrets.json"
+Copy-Item "Protacon.RxMq.AzureServiceBus.Tests\client-secrets.json" -Destination "Protacon.RxMq.AzureServiceBusLegacy.Tests"
