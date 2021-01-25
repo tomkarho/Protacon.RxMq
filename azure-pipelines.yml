@@ -2,7 +2,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'vs2017-win2016'
 
 variables:
   solution: '**/*.sln'
@@ -21,6 +21,51 @@ steps:
   displayName: build solutions
   inputs:
     command: 'build'
+
+- task: DownloadSEcureFile@1
+  name: devSettings
+  displayName: fetch development settings
+  inputs:
+    secureFile: 'developer-settings.json'
+
+- task: AzurePowerShell@5
+  displayName: create environment
+  inputs:
+    azureSubscription: 'Development-use'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
+    ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
+    azurePowerShellVersion: 'LatestVersion'
     
+- task: AzurePowerShell@5
+  displayName: create secrets
+  inputs:
+    azureSubscription: 'Development-use'
+    ScriptType: 'FilePath'
+    ScriptPath: '$(Build.SourcesDirectory)/Create-ClientSecrets.ps1'
+    ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
+    azurePowerShellVersion: 'LatestVersion'
+    
+- task: DotNetCoreCLI@2
+  displayName: tests
+  inputs:
+    command: test
+    projects: '**/*test*.csproj'
+    
+
+
+- task: AzurePowerShell@5
+  inputs:
+    azureSubscription: 'Development-use'
+    ScriptType: 'InlineScript'
+    Inline: 'Remove-AzResourceGroup -Name RxMqTestEnvironment'
+    azurePowerShellVersion: 'LatestVersion'
+
+    
+
+    
+  
+   
+
 
     
