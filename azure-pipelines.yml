@@ -70,7 +70,7 @@ jobs:
 
 - job: 'publish'
   dependsOn: 'build'
-  condition: isTagBuild
+  condition: eq(variables.isTagBuild, true)
   steps:
   - pwsh: |
         $tag = ($Env:BUILD_SOURCEBRANCH -Replace 'refs/tags/','')
