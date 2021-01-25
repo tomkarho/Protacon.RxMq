@@ -68,6 +68,23 @@ In powershell, this can be done with
 ```powershell
 $env:ReferenceAssemblyRoot = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework'
 ```
+## Tests
+
+To be able to run tests
+1. login to Azure with command line (Az login) 
+1. in root create developer-settings.json file for configuring test environment (Azure rg with service bus). Check developer-settings-example.json for reference
+   (tag is vf subproject for devops if environment is created into pinja dev subscription)
+1. run in Testing folder 
+    ```poweshell
+    Prepare-Testenvironment $SettingsFile developer-settings.json
+    ```
+1. In root run 
+    ```powershell
+    Create-setcets.ps1 $SettingsFile developer-settings.json
+    ```
+    This file creates secrets for test settings (dont commit) 
+1. run tests in core and legacy projects
+
 ## Creating and publishing nuget packages by hand if needed
 
 note: You must have nuget credentials added to 'Protacon Nuget packages' repo to be able to do next steps
@@ -84,3 +101,12 @@ note: You must have nuget credentials added to 'Protacon Nuget packages' repo to
     ```bash
     dotnet nuget push Protacon.RxMq.PACKETPROJECT.x.x.x.nupkg --api-key YOURAPIKEY --source https://api.nuget.org/v3/index.json
     ```
+    
+## CI 
+
+Project uses Azure devops pipeline https://dev.azure.com/Protacon/Protacon.RxMq
+Pipeline is authorized with service principal read from devops secret file 
+Nuget api key is devops pipeline variable $(nugetApiKey) create new in nuget org in your account if needed
+It publishes nugets to https://www.nuget.org/packages?q=rxmq
+Pipeline flow : build-create env for tests with secrets - run test -tear down env - if tag (release) publish nugets
+
