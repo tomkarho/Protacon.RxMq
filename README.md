@@ -76,11 +76,11 @@ To be able to run tests
    (tag is vf subproject for devops if environment is created into pinja dev subscription)
 1. run in Testing folder 
     ```poweshell
-    Prepare-Testenvironment $SettingsFile developer-settings.json
+    Prepare-Testenvironment -SettingsFile developer-settings.json
     ```
 1. In root run 
     ```powershell
-    Create-setcets.ps1 $SettingsFile developer-settings.json
+    Create-setcets.ps1 -SettingsFile developer-settings.json
     ```
     This file creates secrets for test settings (dont commit) 
 1. run tests in core and legacy projects
