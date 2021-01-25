@@ -1,5 +1,10 @@
 trigger:
-- master
+  branches:
+    include:
+    - master
+  tags:
+    include:
+    - "*"
 
 pool:
   vmImage: 'vs2017-win2016'
@@ -10,60 +15,76 @@ variables:
   buildConfiguration: 'Release'
   isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
 
-steps:
-- task: DotNetCoreCLI@2
-  displayName: restore
-  inputs:
-    command: 'restore'
-    feedsToUse: 'select'
+jobs:
+- job: 'build'
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: restore
+    inputs:
+      command: 'restore'
+      feedsToUse: 'select'
 
-- task: DotNetCoreCLI@2
-  displayName: build solutions
-  inputs:
-    command: 'build'
+  - task: DotNetCoreCLI@2
+    displayName: build solutions
+    inputs:
+      command: 'build'
+  
+  - task: DownloadSEcureFile@1
+    name: devSettings
+    displayName: fetch development settings
+    inputs:
+      secureFile: 'developer-settings.json'
+  
+  - task: AzurePowerShell@5
+    displayName: create environment
+    inputs:
+      azureSubscription: 'Development-use'
+      ScriptType: 'FilePath'
+      ScriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
+      ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
+      azurePowerShellVersion: 'LatestVersion'
+      
+  - task: AzurePowerShell@5
+    displayName: create secrets
+    inputs:
+      azureSubscription: 'Development-use'
+      ScriptType: 'FilePath'
+      ScriptPath: '$(Build.SourcesDirectory)/Create-ClientSecrets.ps1'
+      ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
+      azurePowerShellVersion: 'LatestVersion'
+      
+  - task: DotNetCoreCLI@2
+    displayName: tests
+    inputs:
+      command: test
+      projects: '**/*test*.csproj'
+             
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: remove environment
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'Development-use'
+      subscriptionId: '594dd722-b5c7-449c-91ae-e9ab9a54b660'
+      action: 'DeleteRG'
+      resourceGroupName: 'RxMqTestEnvironment'
 
-- task: DownloadSEcureFile@1
-  name: devSettings
-  displayName: fetch development settings
-  inputs:
-    secureFile: 'developer-settings.json'
+- job: 'publish'
+  dependsOn: 'build'
+  condition: isTagBuild
+  steps:
+  - pwsh: |
+        $tag = ($Env:BUILD_SOURCEBRANCH -Replace 'refs/tags/','')
+        Write-Host "##vso[task.setvariable variable=buildTag;]$($tag)"
+      
+  - task: PowerShell@2 
+    displayName: publish nuget packages
+    inputs:
+      targetType: 'inline'
+      script: |
+        dotnet pack $(Build.SourcesDirectory)\Protacon.RxMq.Abstractions\Protacon.RxMq.Abstractions.csproj -c Release -o $(Build.SourcesDirectory)\Protacon.RxMq.Abstractions\artifacts /p:Version=$(buildTag) 
+        cd  $(Build.SourcesDirectory)\Protacon.RxMq.Abstractions\artifacts   
+        dotnet nuget push Protacon.RxMq.PACKETPROJECT.$(buildTag).nupkg --api-key $(nugetApiKey) --source https://api.nuget.org/v3/index.json
 
-- task: AzurePowerShell@5
-  displayName: create environment
-  inputs:
-    azureSubscription: 'Development-use'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
-    ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
-    azurePowerShellVersion: 'LatestVersion'
-    
-- task: AzurePowerShell@5
-  displayName: create secrets
-  inputs:
-    azureSubscription: 'Development-use'
-    ScriptType: 'FilePath'
-    ScriptPath: '$(Build.SourcesDirectory)/Create-ClientSecrets.ps1'
-    ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
-    azurePowerShellVersion: 'LatestVersion'
-    
-- task: DotNetCoreCLI@2
-  displayName: tests
-  inputs:
-    command: test
-    projects: '**/*test*.csproj'
-    
-
-
-- task: AzurePowerShell@5
-  inputs:
-    azureSubscription: 'Development-use'
-    ScriptType: 'InlineScript'
-    Inline: 'Remove-AzResourceGroup -Name RxMqTestEnvironment'
-    azurePowerShellVersion: 'LatestVersion'
-
-    
-
-    
   
    
 
