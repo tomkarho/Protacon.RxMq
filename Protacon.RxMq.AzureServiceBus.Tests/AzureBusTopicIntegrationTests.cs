@@ -35,6 +35,42 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
                 .FirstAsync();
         }
 
+        [Fact]
+        public async void WhenMessageFails_ItsBeingSendAgain()
+        {
+            var settings = TestSettings.TopicSettingsOptions();
+            var subscriber = new AzureTopicSubscriber(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicSubscriber>>());
+            var publisher = new AzureTopicPublisher(settings, new AzureBusTopicManagement(settings), Substitute.For<ILogger<AzureTopicPublisher>>());
+            int i = 0;
+            publisher
+            .When(x => {
+                i++;
+                x.SendAsync<TestMessageForTopic>(Arg.Any<TestMessageForTopic>());
+
+            })
+
+            .Do(x => {
+                if (i < 2) {
+            throw new Exception();
+            }
+                  });
+
+            var id = Guid.NewGuid();
+            var listener = subscriber.Messages<TestMessageForTopic>();
+
+            await publisher.SendAsync(new TestMessageForTopic
+            {
+                ExampleId = id
+            });
+
+            await listener
+                .Where(x => x.ExampleId == id)
+                .Timeout(TimeSpan.FromSeconds(10))
+                .FirstAsync(); 
+
+            publisher.SendAsync(Arg.Any<TestMessageForTopic>()).Should().Received(3);
+        }
+
 
         // testi joka heittää poikkeuksen ja kutsuu uudestaan send async
 
