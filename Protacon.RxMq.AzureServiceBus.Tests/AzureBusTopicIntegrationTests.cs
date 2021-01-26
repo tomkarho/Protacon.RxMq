@@ -151,7 +151,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             await listener
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(30))
+                .Timeout(TimeSpan.FromSeconds(60))
                 .FirstAsync();
         }
     }

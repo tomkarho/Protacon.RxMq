@@ -26,7 +26,7 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
 
             await subscriber.Messages<TestMessage>()
                 .Where(x => x.ExampleId == id)
-                .Timeout(TimeSpan.FromSeconds(5))
+                .Timeout(TimeSpan.FromSeconds(30))
                 .FirstAsync();
         }
 
