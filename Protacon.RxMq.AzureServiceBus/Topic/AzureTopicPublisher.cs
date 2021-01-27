@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -21,6 +20,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         private readonly ILogger<AzureTopicPublisher> _logger;
         private readonly ConcurrentDictionary<string, Binding> _bindings = new ConcurrentDictionary<string, Binding>();
         private const int TriesBeforeInterval = 5;
+        private int RetrySendMsgCount = 0;
         private const int IntervalOfBindingRetry = 60;
 
         private class Binding : IDisposable
@@ -98,6 +98,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
         public Task SendAsync<T>(T message) where T : new()
         {
+            
             try
             {
               var topic = _settings.TopicNameBuilder(message.GetType());
@@ -110,9 +111,13 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             catch (Exception e)
             {
                  _logger.LogError($"{nameof(SendAsync)}: Failed to send async message '{message}' '{e.Message}' '{e.StackTrace}'");
-                 return SendAsync(message);
+                 if (RetrySendMsgCount < 3) {
+                    _logger.LogInformation($"{nameof(SendAsync)}: trying to send message again, for {RetrySendMsgCount}. time");
+                    RetrySendMsgCount++;
+                    return SendAsync(message);
+                 }
+                 throw e;
             }
-           
         }
 
         /// <summary>
