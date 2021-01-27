@@ -52,7 +52,7 @@ Configure `AzureQueueMqSettings`, there are configuration methods which can be o
 
 ## Developing
 
-Requires NET core 2.x. and .NET Framework SDK 4.5 and 4.6.1
+Requires NET core 2.x. and .NET Framework SDK 4.5.2 and 4.6.1
 
 Setting up test environment
 
