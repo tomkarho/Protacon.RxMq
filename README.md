@@ -104,9 +104,10 @@ note: You must have nuget credentials added to 'Protacon Nuget packages' repo to
     
 ## CI 
 
-Project uses Azure devops pipeline https://dev.azure.com/Protacon/Protacon.RxMq
-Pipeline is authorized with service principal read from devops secret file 
-Nuget api key is devops pipeline variable $(nugetApiKey) create new in nuget org in your account if needed
-It publishes nugets to https://www.nuget.org/packages?q=rxmq
-Pipeline flow : build-create env for tests with secrets - run test -tear down env - if tag (release) publish nugets
+Project uses Azure devops pipeline https://dev.azure.com/Protacon/Protacon.RxMq   
+Pipeline is authorized with service principal read from devops secret file    
+Nuget api key is devops pipeline variable $(nugetApiKey) create new in nuget org in your account if needed   
+It publishes nugets to https://www.nuget.org/packages?q=rxmq   
+Pipeline tag build triggers when new release with tag is made in github  
+Pipeline flow : build-create env for tests with secrets - run test -tear down env - if tag (release) publish nugets  
 
