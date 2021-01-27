@@ -97,8 +97,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         }
 
         public Task SendAsync<T>(T message) where T : new()
-        {
-            
+        { 
             try
             {
               var topic = _settings.TopicNameBuilder(message.GetType());
@@ -112,11 +111,14 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             {
                  _logger.LogError($"{nameof(SendAsync)}: Failed to send async message '{message}' '{e.Message}' '{e.StackTrace}'");
                  if (RetrySendMsgCount < 3) {
+                     RetrySendMsgCount++;
                     _logger.LogInformation($"{nameof(SendAsync)}: trying to send message again, for {RetrySendMsgCount}. time");
-                    RetrySendMsgCount++;
-                    return SendAsync(message);
+                     return SendAsync(message);
+                 } 
+                 else
+                 {
+                     throw e;
                  }
-                 throw e;
             }
         }
 
