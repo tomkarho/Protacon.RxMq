@@ -14,7 +14,7 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
-  envName: '$(Build.SourceBranch)_RxMqTestEnvironment'
+  envName: '$(Build.Repository.Name)RxMqTestEnvironment'
 
 jobs:
 - job: 'build'
