@@ -12,7 +12,8 @@
     Defaults to 'developer-settings.json'
 #>
 param(
-    [Parameter()][string]$SettingsFile = 'developer-settings.json'
+    [Parameter()][string]$SettingsFile = 'developer-settings.json',
+    [Parameter()][string]$EnvironmentName = $SettingsFile.ResourceGroupName
 )
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -25,12 +26,12 @@ if ($settingsJson.Tags) {
     $settingsJson.Tags.psobject.properties | ForEach-Object { $tagsHashtable[$_.Name] = $_.Value }
 }
 
-Write-Host "Creating resource group $($settingsJson.ResourceGroupName) to location $($settingsJson.Location)..."
-New-AzResourceGroup -Name $settingsJson.ResourceGroupName -Location $settingsJson.Location -Tag $tagsHashtable -Force
+Write-Host "Creating resource group $($EnvironmentName) to location $($settingsJson.Location)..."
+New-AzResourceGroup -Name $EnvironmentName -Location $settingsJson.Location -Tag $tagsHashtable -Force
 
 Write-Host 'Creating environment...'
 New-AzResourceGroupDeployment `
     -Name 'test-deployment' `
     -TemplateFile 'Testing/azuredeploy.json' `
-    -ResourceGroupName $settingsJson.ResourceGroupName `
-    -serviceBusName $settingsJson.ResourceGroupName `
+    -ResourceGroupName $EnvironmentName `
+    -serviceBusName $EnvironmentName `
