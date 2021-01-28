@@ -14,7 +14,7 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
-  envName: 'RxMqTestEnvironment_$(Build.SourceBranchName)'
+  envName: 'RxMqTestEnvironment_$(Build.BuildNumber)'
 
 jobs:
 - job: 'build'
@@ -68,7 +68,7 @@ jobs:
       azureResourceManagerConnection: 'Development-use'
       subscriptionId: '594dd722-b5c7-449c-91ae-e9ab9a54b660'
       action: 'DeleteRG'
-      resourceGroupName: 'RxMqTestEnvironment'
+      resourceGroupName: $(envName)
 
 - job: 'publish'
   dependsOn: 'build'
