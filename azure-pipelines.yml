@@ -14,6 +14,8 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
+  buildNumber: $[replace(variables['build.BuildNumber'], '.', '')]
+  envName: 'RxMqTestEnvironment$(buildNumber)'
 
 jobs:
 - job: 'build'
@@ -34,14 +36,15 @@ jobs:
     displayName: fetch development settings
     inputs:
       secureFile: 'developer-settings.json'
-  
   - task: AzurePowerShell@5
     displayName: create environment
     inputs:
       azureSubscription: 'Development-use'
       ScriptType: 'FilePath'
       ScriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
-      ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
+      ScriptArguments:
+        -SettingsFile $(devSettings.secureFilePath) `
+        -EnvironmentName $(envName)
       azurePowerShellVersion: 'LatestVersion'
       
   - task: AzurePowerShell@5
@@ -66,7 +69,7 @@ jobs:
       azureResourceManagerConnection: 'Development-use'
       subscriptionId: '594dd722-b5c7-449c-91ae-e9ab9a54b660'
       action: 'DeleteRG'
-      resourceGroupName: 'RxMqTestEnvironment'
+      resourceGroupName: $(envName)
 
 - job: 'publish'
   dependsOn: 'build'
