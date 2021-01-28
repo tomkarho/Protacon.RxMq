@@ -53,7 +53,9 @@ jobs:
       azureSubscription: 'Development-use'
       ScriptType: 'FilePath'
       ScriptPath: '$(Build.SourcesDirectory)/Create-ClientSecrets.ps1'
-      ScriptArguments: '-settingsFile $(devSettings.secureFilePath)'
+      ScriptArguments:
+        -SettingsFile $(devSettings.secureFilePath) `
+        -EnvironmentName $(envName)
       azurePowerShellVersion: 'LatestVersion'
       
   - task: DotNetCoreCLI@2
