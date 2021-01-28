@@ -1,0 +1,9 @@
+{
+    "ResourceGroupName": "",
+    "Location": "North Europe",
+    "ServicePrincipal": {
+        "AppId": "application id",
+        "Password": "password"
+    },
+    "Tags": {}
+}
