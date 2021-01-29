@@ -29,7 +29,9 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             private readonly TopicClient _topicClient;
             private readonly ILogger<AzureTopicPublisher> _logger;
             private readonly AzureBusTopicSettings _settings;
-            
+            private readonly string _topic;
+            private readonly IList<string> _excludeTopicsFromLogging;
+
             internal Binding(
                 AzureBusTopicSettings settings,
                 AzureBusTopicManagement queueManagement,
@@ -39,15 +41,17 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             {
                 _logger = logger;
                 _settings = settings;
-                queueManagement.CreateTopicIfMissing(topic, type);
+                _topic = topic;
+                _excludeTopicsFromLogging = new LoggingConfiguration().ExcludeTopicsFromLogging();
+                queueManagement.CreateTopicIfMissing(_topic, type);
                 
                 var retryPolicy = new RetryExponential(
                     TimeSpan.FromSeconds(settings.AzureRetryMinimumBackoff),
                     TimeSpan.FromSeconds(settings.AzureRetryMaximumBackoff),
                     settings.AzureMaximumRetryCount
                 );
-                _topicClient = new TopicClient(settings.ConnectionString, topic, retryPolicy);
-                _logger.LogInformation($"Created new MQ binding '{topic}'.");
+                _topicClient = new TopicClient(settings.ConnectionString, _topic, retryPolicy);
+                _logger.LogInformation($"Created new MQ binding '{_topic}'.");
             }
 
             public Task SendAsync(object message)
@@ -60,7 +64,10 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                         ContractResolver = new CamelCasePropertyNamesContractResolver()
                     });
 
-                _logger.LogInformation($"Sending message to queue '{message}'");
+                if (!_excludeTopicsFromLogging.Contains(_topic))
+                {
+                    _logger.LogInformation($"{nameof(SendAsync)}/{_topic} sending message to queue '{message}'");
+                }
 
                 var contentJsonBytes = Encoding.UTF8.GetBytes(asJson);
 

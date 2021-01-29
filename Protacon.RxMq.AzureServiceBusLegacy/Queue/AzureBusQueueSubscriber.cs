@@ -23,12 +23,14 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
         private class Binding<T> : IDisposable where T : new()
         {
             private readonly MessageReceiver _receiver;
+            private readonly IList<string> _excludeQueuesFromLogging;
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, AzureQueueMqSettings settings, Action<string> logMessage, Action<string> logError)
             {
                 var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
 
                 _receiver = messagingFactory.CreateMessageReceiver(queueName, ReceiveMode.PeekLock);
+                _excludeQueuesFromLogging = new LoggingConfiguration().ExcludeQueuesFromLogging();
 
                 if (!namespaceManager.QueueExists(queueName))
                 {
@@ -46,7 +48,10 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
                         {
                             var body = reader.ReadToEnd();
 
-                            logMessage($"Received '{queueName}': {body}");
+                            if (!_excludeQueuesFromLogging.Contains(queueName))
+                            {
+                                logMessage($"Received '{queueName}': {body}");
+                            }
 
                             Subject.OnNext(JObject.Parse(body)["data"].ToObject<T>());
                         }

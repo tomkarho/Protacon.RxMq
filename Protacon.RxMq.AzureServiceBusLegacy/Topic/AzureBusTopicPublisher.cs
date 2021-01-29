@@ -31,6 +31,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
             private readonly Action<string> _logMessage;
             private readonly Action<string> _logError;
             private readonly AzureTopicMqSettings _azureTopicMqSettings;
+            private readonly IList<string> _excludeTopicsFromLogging;
 
             internal Binding(
                 MessagingFactory messagingFactory,
@@ -43,6 +44,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 _logMessage = logMessage;
                 _logError = logError;
                 _azureTopicMqSettings = settings;
+                _excludeTopicsFromLogging = new LoggingConfiguration().ExcludeTopicsFromLogging();
 
                 if (!namespaceManager.TopicExists(topicName))
                 {
@@ -51,9 +53,9 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 }
             }
 
-            public Task SendAsync(T message, string queueName)
+            public Task SendAsync(T message, string topicName)
             {
-                var sender = _messagingFactory.CreateMessageSender(queueName);
+                var sender = _messagingFactory.CreateMessageSender(topicName);
 
                 var body =
                     JsonConvert.SerializeObject(
@@ -77,14 +79,17 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                     .ToList()
                     .ForEach(x => brokeredMessage.Properties.Add(x.Key, x.Value));
 
-                _logMessage($"{nameof(SendAsync)} sending message '{body}' with Azure MessageId: '{brokeredMessage.MessageId}'");
+                if (!_excludeTopicsFromLogging.Contains(topicName))
+                {
+                    _logMessage($"{nameof(SendAsync)}/{topicName} sending message '{body}' with Azure MessageId: '{brokeredMessage.MessageId}'");
+                }
 
                 return sender.SendAsync(brokeredMessage)
                     .ContinueWith(task =>
                     {
                         if (task.Exception != null)
                         {
-                            _logError($"{nameof(SendAsync)} error occurred: {task.Exception}");
+                            _logError($"{nameof(SendAsync)}/{topicName} error occurred: {task.Exception}");
                         }
 
                         return task;

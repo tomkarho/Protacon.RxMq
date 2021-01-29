@@ -26,9 +26,12 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
         private class Binding<T>: IDisposable, IBinding where T: new()
         {
+            private readonly IList<string> _excludeTopicsFromLogging;
+
             internal Binding(AzureBusTopicSettings settings, ILogger<AzureTopicSubscriber> logging,
                 AzureBusTopicManagement queueManagement, BlockingCollection<IBinding> errorActions)
             {
+                _excludeTopicsFromLogging = new LoggingConfiguration().ExcludeTopicsFromLogging();
                 var topicName = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicName}.{settings.TopicSubscriberId}";
 
@@ -44,7 +47,10 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                         {
                             var body = Encoding.UTF8.GetString(message.Body);
 
-                            logging.LogInformation($"Received '{subscriptionName}': {body} with Azure MessageId: '{message.MessageId}'");
+                            if (!_excludeTopicsFromLogging.Contains(topicName))
+                            {
+                                logging.LogInformation($"Received '{subscriptionName}': {body} with Azure MessageId: '{message.MessageId}'");
+                            }
 
                             var asObject = AsObject(body);
 

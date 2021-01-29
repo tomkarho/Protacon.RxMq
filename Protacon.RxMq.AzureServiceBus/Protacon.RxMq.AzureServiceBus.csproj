@@ -17,4 +17,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Protacon.RxMq.Abstractions\Protacon.RxMq.Abstractions.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="logging-configuration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
