@@ -2,6 +2,9 @@
 
 namespace Protacon.RxMq.Abstractions
 {
+    /// <summary>
+    /// Provide support to read configuration file to implement logging exclusion based on Queue or Topic.
+    /// </summary>
     public interface ILoggingConfiguration
     {
         /// <summary>

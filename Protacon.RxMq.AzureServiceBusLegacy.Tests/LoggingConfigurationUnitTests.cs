@@ -54,7 +54,24 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
             using (FileStream fs = File.Create(Path.Combine(fileName)))
             {
-                var content = new UTF8Encoding(true).GetBytes("{\"NoQueuesKeyHere\": \"invalid\", \"NoTopicsKeyHere\": \"invalid\"}");
+                var content = new UTF8Encoding(true).GetBytes("{\"NoExcludeKeyHere\": {\"NoQueuesKeyHere\": \"invalid\", \"NoTopicsKeyHere\": \"invalid\"}}");
+                fs.Write(content, 0, content.Length);
+            }
+
+            var loggingConfiguration = new LoggingConfiguration();
+            loggingConfiguration.ExcludeQueuesFromLogging().Should().BeEmpty();
+            loggingConfiguration.ExcludeQueuesFromLogging().Count.Should().Be(0);
+            loggingConfiguration.ExcludeTopicsFromLogging().Should().BeEmpty();
+            loggingConfiguration.ExcludeTopicsFromLogging().Count.Should().Be(0);
+        }
+
+        [Fact]
+        public void WhenInitializedWithCorrentKeyConfiguration_WithoutDataKeys_ThenLoggingFilterIsEmpty()
+        {
+            var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
+            using (FileStream fs = File.Create(Path.Combine(fileName)))
+            {
+                var content = new UTF8Encoding(true).GetBytes("{\"Exclude\": {}}");
                 fs.Write(content, 0, content.Length);
             }
 
@@ -71,7 +88,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
             using (FileStream fs = File.Create(Path.Combine(fileName)))
             {
-                var content = new UTF8Encoding(true).GetBytes("{\"Queues\": \"invalid\", \"topics\": \"invalid\"}");
+                var content = new UTF8Encoding(true).GetBytes("{\"Exclude\": {\"Queues\": \"invalid\", \"Topics\": \"invalid\"}}");
                 fs.Write(content, 0, content.Length);
             }
 
@@ -88,7 +105,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
             using (FileStream fs = File.Create(Path.Combine(fileName)))
             {
-                var content = new UTF8Encoding(true).GetBytes("{\"Queues\": [], \"Topics\": []}");
+                var content = new UTF8Encoding(true).GetBytes("{\"Exclude\": {\"Queues\": [], \"Topics\": []}}");
                 fs.Write(content, 0, content.Length);
             }
 
@@ -105,7 +122,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
             using (FileStream fs = File.Create(Path.Combine(fileName)))
             {
-                var content = new UTF8Encoding(true).GetBytes("{\"Queues\": [\"\",\"\"], \"Topics\": [\"\",\"\"]}");
+                var content = new UTF8Encoding(true).GetBytes("{\"Exclude\": {\"Queues\": [\"\",\"\"], \"Topics\": [\"\",\"\"]}}");
                 fs.Write(content, 0, content.Length);
             }
 
@@ -122,7 +139,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
             using (FileStream fs = File.Create(Path.Combine(fileName)))
             {
-                var content = new UTF8Encoding(true).GetBytes("{\"Queues\": [\"testqueue\",\"anothertestqueue\"], \"Topics\": [\"testtopic\",\"anothertesttopic\"]}");
+                var content = new UTF8Encoding(true).GetBytes("{\"Exclude\": {\"Queues\": [\"testqueue\",\"anothertestqueue\"], \"Topics\": [\"testtopic\",\"anothertesttopic\"]}}");
                 fs.Write(content, 0, content.Length);
             }
 
@@ -139,7 +156,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             var fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
             using (FileStream fs = File.Create(Path.Combine(fileName)))
             {
-                var content = new UTF8Encoding(true).GetBytes("{\"Invalid\": \"Values\",\"Queues\": [\"\", \"testqueue\", \"       \", \"anothertestqueue\"], \"Topics\": [\"\", \"testtopic\", \"       \", \"anothertesttopic\"]}");
+                var content = new UTF8Encoding(true).GetBytes("{\"Exclude\": {\"Invalid\": \"Values\",\"Queues\": [\"\", \"testqueue\", \"       \", \"anothertestqueue\"], \"Topics\": [\"\", \"testtopic\", \"       \", \"anothertesttopic\"]}}");
                 fs.Write(content, 0, content.Length);
             }
 

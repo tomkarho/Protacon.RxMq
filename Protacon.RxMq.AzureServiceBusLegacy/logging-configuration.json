@@ -1,4 +1,6 @@
 {
-  "Queues": [],
-  "Topics": [] 
+  "Exclude": {
+    "Queues": [],
+    "Topics": []
+  }
 }

@@ -27,7 +27,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy
                 try
                 {
                     JObject queueConfigFileContent = JObject.Parse(content);
-                    JArray queues = (JArray) queueConfigFileContent[configuration];
+                    JArray queues = (JArray) queueConfigFileContent["Exclude"][configuration];
 
                     return queues?.Values<string>()?.Where(queue => !string.IsNullOrWhiteSpace(queue))?.ToList();
                 }
