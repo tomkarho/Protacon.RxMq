@@ -20,6 +20,8 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
 
         private class Binding<T>: IDisposable where T: new()
         {
+            private readonly IList<string> _excludeQueuesFromLogging;
+
             internal Binding(AzureBusQueueSettings settings, ILogger<AzureQueueSubscriber> logging, AzureBusQueueManagement queueManagement)
             {
                 var queueName = settings.QueueNameBuilderForSubscriber(typeof(T));
@@ -27,6 +29,7 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
                 queueManagement.CreateQueIfMissing(queueName, typeof(T));
 
                 var queueClient = new QueueClient(settings.ConnectionString, queueName);
+                _excludeQueuesFromLogging = new LoggingConfiguration().ExcludeQueuesFromLogging();
 
                 queueClient.RegisterMessageHandler(
                     async (message, _) =>
@@ -35,7 +38,10 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
                         {
                             var body = Encoding.UTF8.GetString(message.Body);
 
-                            logging.LogInformation($"Received '{queueName}': {body}");
+                            if (!_excludeQueuesFromLogging.Contains(queueName))
+                            {
+                                logging.LogInformation($"Received '{queueName}': {body}");
+                            }
 
                             var asObject = AsObject(body);
 

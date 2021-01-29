@@ -23,6 +23,8 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
         {
             private readonly QueueClient _queueClient;
             private readonly ILogger<AzureQueuePublisher> _logger;
+            private readonly string _queue;
+            private readonly IList<string> _excludeQueuesFromLogging;
 
             internal Binding(
                 AzureBusQueueSettings settings,
@@ -31,11 +33,13 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
                 Type type,
                 ILogger<AzureQueuePublisher> logger)
             {
-                queueManagement.CreateQueIfMissing(queue, type);
+                _queue = queue;
+                queueManagement.CreateQueIfMissing(_queue, type);
 
-                _queueClient = new QueueClient(settings.ConnectionString, queue);
+                _queueClient = new QueueClient(settings.ConnectionString, _queue);
+                _excludeQueuesFromLogging = new LoggingConfiguration().ExcludeQueuesFromLogging();
 
-                logger.LogInformation($"Created new MQ binding '{queue}'.");
+                logger.LogInformation($"Created new MQ binding '{_queue}'.");
                 _logger = logger;
             }
 
@@ -49,7 +53,10 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
                             ContractResolver = new CamelCasePropertyNamesContractResolver()
                         });
 
-                _logger.LogDebug($"Sending message to queue '{message}'");
+                if (!_excludeQueuesFromLogging.Contains(_queue))
+                {
+                    _logger.LogDebug($"{nameof(SendAsync)}/{_queue} sending message '{message}'");
+                }
 
                 var contentJsonBytes = Encoding.UTF8.GetBytes(asJson);
 
