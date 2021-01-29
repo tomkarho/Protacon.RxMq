@@ -22,6 +22,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         private const int TriesBeforeInterval = 5;
         private int RetrySendMsgCount = 0;
         private const int IntervalOfBindingRetry = 60;
+        private const int maxSendAsyncRetries = 3;
 
         private class Binding : IDisposable
         {
@@ -100,7 +101,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         { 
             try
             {
-              var topic = _settings.TopicNameBuilder(message.GetType());
+                var topic = _settings.TopicNameBuilder(message.GetType());
 
             if (!_bindings.ContainsKey(topic))
                 return TryCreateBinding(topic, typeof(T), message, TriesBeforeInterval, TimeSpan.FromSeconds(IntervalOfBindingRetry));
@@ -109,10 +110,10 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             }
             catch (Exception e)
             {
-                 _logger.LogError($"{nameof(SendAsync)}: Failed to send async message '{message}' '{e.Message}' '{e.StackTrace}'");
-                 if (RetrySendMsgCount < 3) {
+                  _logger.LogError($"{nameof(SendAsync)}: Failed to send async message '{message}' '{e.Message}'{Environment.NewLine}'{e.StackTrace}'");
+                 if (RetrySendMsgCount < maxSendAsyncRetries) {
                      RetrySendMsgCount++;
-                    _logger.LogInformation($"{nameof(SendAsync)}: trying to send message again, for {RetrySendMsgCount}. time");
+                    _logger.LogInformation($"{nameof(SendAsync)}: trying to send message again,  Trying to send message again '{RetrySendMsgCount}/{maxSendAsyncRetries}'");
                      return SendAsync(message);
                  } 
                  else
@@ -146,7 +147,9 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                     _logger.LogInformation(
                         $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {i} of {instantRecoveryTries})");
                     bool success = _bindings.TryAdd(topic, binding);
-                    if (!success) continue;
+                    if (!success) {
+                        continue;
+                    } 
                     return _bindings[topic].SendAsync(message);
                 }
             }
@@ -170,7 +173,9 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                     _logger.LogInformation(
                         $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval)");
                     bool success = _bindings.TryAdd(topic, binding);
-                    if (success) cancellation.Cancel();
+                    if (success) {
+                        cancellation.Cancel();
+                    }
                 }
             }
         }
