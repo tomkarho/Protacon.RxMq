@@ -1,0 +1,111 @@
+trigger:
+  branches:
+    include:
+    - master
+  tags:
+    include:
+    - "*"
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  isTagBuild: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/')]
+  buildNumber: $[replace(variables['build.BuildNumber'], '.', '')]
+  envName: 'RxMqTestEnvironment$(buildNumber)'
+
+jobs:
+- job: 'build'
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: restore
+    inputs:
+      command: 'restore'
+      feedsToUse: 'select'
+
+  - task: DotNetCoreCLI@2
+    displayName: build solutions
+    inputs:
+      command: 'build'
+  
+  - task: DownloadSEcureFile@1
+    name: devSettings
+    displayName: fetch development settings
+    inputs:
+      secureFile: 'developer-settings.json'
+  - task: AzurePowerShell@5
+    displayName: create environment
+    inputs:
+      azureSubscription: 'Development-use'
+      ScriptType: 'FilePath'
+      ScriptPath: '$(Build.SourcesDirectory)/Testing/Prepare-environment.ps1'
+      ScriptArguments:
+        -SettingsFile $(devSettings.secureFilePath) `
+        -EnvironmentName $(envName)
+      azurePowerShellVersion: 'LatestVersion'
+      
+  - task: AzurePowerShell@5
+    displayName: create secrets
+    inputs:
+      azureSubscription: 'Development-use'
+      ScriptType: 'FilePath'
+      ScriptPath: '$(Build.SourcesDirectory)/Create-ClientSecrets.ps1'
+      ScriptArguments:
+        -SettingsFile $(devSettings.secureFilePath) `
+        -EnvironmentName $(envName)
+      azurePowerShellVersion: 'LatestVersion'
+      
+  - task: DotNetCoreCLI@2
+    displayName: tests
+    inputs:
+      command: test
+      projects: '**/*test*.csproj'
+             
+  - task: AzureResourceManagerTemplateDeployment@3
+    displayName: remove environment
+    inputs:
+      deploymentScope: 'Resource Group'
+      azureResourceManagerConnection: 'Development-use'
+      subscriptionId: '594dd722-b5c7-449c-91ae-e9ab9a54b660'
+      action: 'DeleteRG'
+      resourceGroupName: $(envName)
+
+- job: 'publish'
+  dependsOn: 'build'
+  condition: eq(variables.isTagBuild, true)
+  steps:
+  - pwsh: |
+        $tag = ($Env:BUILD_SOURCEBRANCH -Replace 'refs/tags/','')
+        Write-Host "##vso[task.setvariable variable=buildTag;]$($tag)"
+      
+  - task: PowerShell@2 
+    displayName: publish abstractions nuget packages
+    inputs:
+      targetType: 'inline'
+      script: |
+        dotnet pack $(Build.SourcesDirectory)\Protacon.RxMq.Abstractions\Protacon.RxMq.Abstractions.csproj -c Release -o $(Build.SourcesDirectory)\Protacon.RxMq.Abstractions\artifacts /p:Version=$(buildTag) 
+        cd  $(Build.SourcesDirectory)\Protacon.RxMq.Abstractions\artifacts   
+        dotnet nuget push Protacon.RxMq.Abstractions.$(buildTag).nupkg --api-key $(nugetApiKey) --source https://api.nuget.org/v3/index.json
+
+  - task: PowerShell@2 
+    displayName: publish AzureServiceBus nuget packages
+    inputs:
+      targetType: 'inline'
+      script: |
+        dotnet pack $(Build.SourcesDirectory)\Protacon.RxMq.AzureServiceBus\Protacon.RxMq.AzureServiceBus.csproj -c Release -o $(Build.SourcesDirectory)\Protacon.RxMq.AzureServiceBus\artifacts /p:Version=$(buildTag) 
+        cd  $(Build.SourcesDirectory)\Protacon.RxMq.AzureServiceBus\artifacts   
+        dotnet nuget push Protacon.RxMq.AzureServiceBus.$(buildTag).nupkg --api-key $(nugetApiKey) --source https://api.nuget.org/v3/index.json  
+   
+  - task: PowerShell@2 
+    displayName: publish AzureServiceBusLegacy nuget packages
+    inputs:
+      targetType: 'inline'
+      script: |
+        dotnet pack $(Build.SourcesDirectory)\Protacon.RxMq.AzureServiceBusLegacy\Protacon.RxMq.AzureServiceBusLegacy.csproj -c Release -o $(Build.SourcesDirectory)\Protacon.RxMq.AzureServiceBusLegacy\artifacts /p:Version=$(buildTag) 
+        cd  $(Build.SourcesDirectory)\Protacon.RxMq.AzureServiceBusLegacy\artifacts   
+        dotnet nuget push Protacon.RxMq.AzureServiceBusLegacy.$(buildTag).nupkg --api-key $(nugetApiKey) --source https://api.nuget.org/v3/index.json
+
+    
