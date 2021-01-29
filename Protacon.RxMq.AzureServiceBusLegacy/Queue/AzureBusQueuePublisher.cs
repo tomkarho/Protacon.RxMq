@@ -26,6 +26,8 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
             private readonly MessagingFactory _messagingFactory;
             private readonly Action<string> _logMessage;
             private readonly Action<string> _logError;
+            private readonly string _queueName;
+            private readonly IList<string> _excludeQueuesFromLogging;
 
             internal Binding(
                 MessagingFactory messagingFactory,
@@ -37,10 +39,12 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
                 _messagingFactory = messagingFactory;
                 _logMessage = logMessage;
                 _logError = logError;
+                _queueName = queueName;
+                _excludeQueuesFromLogging = new LoggingConfiguration().ExcludeQueuesFromLogging();
 
                 if (!namespaceManager.QueueExists(queueName))
                 {
-                    var queueDescription = new QueueDescription(queueName);
+                    var queueDescription = new QueueDescription(_queueName);
                     namespaceManager.CreateQueue(settings.QueueBuilderConfig(queueDescription, typeof(T)));
                 }
             }
@@ -59,7 +63,10 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
                         }
                     );
 
-                _logMessage($"{nameof(SendAsync)} sending message '{body}'");
+                if (!_excludeQueuesFromLogging.Contains(_queueName))
+                {
+                    _logMessage($"{nameof(SendAsync)}/{_queueName} sending message '{body}'");
+                }
 
                 var bytes = Encoding.UTF8.GetBytes(body);
                 var stream = new MemoryStream(bytes, writable: false);
@@ -69,7 +76,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Queue
                     {
                         if (task.Exception != null)
                         {
-                            _logError($"{nameof(SendAsync)} error occurred: {task.Exception}");
+                            _logError($"{nameof(SendAsync)}/{_queueName} error occurred: {task.Exception}");
                         }
 
                         return task;

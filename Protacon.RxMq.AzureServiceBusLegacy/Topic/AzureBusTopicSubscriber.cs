@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Subjects;
@@ -32,11 +33,13 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
 
             private readonly BlockingCollection<IBinding> _errorActions;
             private readonly Action<string> _logError;
+            private readonly IList<string> _excludeTopicsFromLogging;
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, AzureTopicMqSettings settings, BlockingCollection<IBinding> errorActions, Action<string> logMessage, Action<string> logError)
             {
                 _errorActions = errorActions;
                 _logError = logError;
+                _excludeTopicsFromLogging = new LoggingConfiguration().ExcludeTopicsFromLogging();
                 var topicPath = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicPath}.{settings.TopicSubscriberId}";
 
@@ -63,7 +66,10 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                         {
                             var body = reader.ReadToEnd();
 
-                            logMessage($"Received '{topicPath}': {body}");
+                            if (!_excludeTopicsFromLogging.Contains(topicPath))
+                            {
+                                logMessage($"Received '{topicPath}': {body}");
+                            }
 
                             Subject.OnNext(JObject.Parse(body)["data"].ToObject<T>());
                         }
