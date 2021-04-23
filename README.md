@@ -61,10 +61,12 @@ Setting up test environment
     1. Create a copy of `developer-settings.example.json` with name `developer-settings.json`
     1. Replace `developer-settings.json` content with correct values
 1. Create testing environment
-    1. Run `Testing/Prepare-Environment.ps1` (see script for detailed
+    1. Replace "ResourceGroupHere" with the actual name of the RG
+    1. Run `Testing/Prepare-Environment.ps1 -EnvironmentName "ResourceGroupHere"` (see script for detailed
     documentation)
 1. Create client secrets
-    1. Run `Create-CrientSecrets.ps1`
+    1. 1. Replace "ResourceGroupHere" with the actual name of the RG
+    1. Run `Create-ClientSecrets.ps1 -EnvironmentName "ResourceGroupHere"`
 
 After running these steps, you should have a Service Bus in Azure and
 `client-secrets.json` -file for testing. Environment variables can also be used
