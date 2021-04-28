@@ -33,18 +33,20 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
 
             private readonly BlockingCollection<IBinding> _errorActions;
             private readonly Action<string> _logError;
+            private readonly Action<string> _logMessage;
             private readonly IList<string> _excludeTopicsFromLogging;
 
             internal Binding(MessagingFactory messagingFactory, NamespaceManager namespaceManager, AzureTopicMqSettings settings, BlockingCollection<IBinding> errorActions, Action<string> logMessage, Action<string> logError)
             {
                 _errorActions = errorActions;
                 _logError = logError;
+                _logMessage = logMessage;
                 _excludeTopicsFromLogging = new LoggingConfiguration().ExcludeTopicsFromLogging();
                 var topicPath = settings.TopicNameBuilder(typeof(T));
                 var subscriptionName = $"{topicPath}.{settings.TopicSubscriberId}";
 
                 MakeSureTopicExists(namespaceManager, settings, topicPath);
-                MakeSureSubscriptionExists(namespaceManager, settings, topicPath, subscriptionName);
+                MakeSureSubscriptionExists(namespaceManager, settings, topicPath, subscriptionName, true);
 
                 _receiver = messagingFactory.CreateSubscriptionClient(topicPath, subscriptionName);
                 _receiver.RemoveRule("$default");
@@ -81,30 +83,42 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 }, _options);
             }
 
-            private static void MakeSureSubscriptionExists(NamespaceManager namespaceManager, AzureTopicMqSettings settings,
-                string topicPath, string subscriptionName)
+            private void MakeSureSubscriptionExists(NamespaceManager namespaceManager, AzureTopicMqSettings settings,
+                string topicPath, string subscriptionName, bool removePrevious = false)
             {
+                var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
                 if (!namespaceManager.SubscriptionExists(topicPath, subscriptionName))
                 {
-                    var subscriptionDescription = new SubscriptionDescription(topicPath, subscriptionName);
                     namespaceManager.CreateSubscription(settings.SubscriptionBuilderConfig(subscriptionDescription, typeof(T)));
+                    _logMessage($"MakeSureSubscriptionExists: Created subscription: {subscriptionName}");
+                }
+                else
+                {
+                    if (removePrevious)
+                    {
+                        namespaceManager.DeleteSubscription(topicPath, subscriptionName);
+                        namespaceManager.CreateSubscription(settings.SubscriptionBuilderConfig(subscriptionDescription, typeof(T)));
+                        _logMessage($"MakeSureSubscriptionExists: Deleted and created subscription: {subscriptionName}");
+                    }
                 }
             }
 
-            private static void MakeSureTopicExists(NamespaceManager namespaceManager, AzureTopicMqSettings settings,
+            private void MakeSureTopicExists(NamespaceManager namespaceManager, AzureTopicMqSettings settings,
                 string topicPath)
             {
                 if (!namespaceManager.TopicExists(topicPath))
                 {
                     var queueDescription = new TopicDescription(topicPath);
                     namespaceManager.CreateTopic(settings.TopicBuilderConfig(queueDescription, typeof(T)));
+                    _logMessage($"MakeSureTopicExists: Created topic: {topicPath}");
                 }
             }
 
             private void OptionsOnExceptionReceived(object sender, ExceptionReceivedEventArgs exceptionEventArgs)
             {
-                _logError($"Action '{exceptionEventArgs.Action}' caused exception {exceptionEventArgs.Exception}.");
-                if (exceptionEventArgs.Exception is MessagingEntityNotFoundException || exceptionEventArgs.Exception is MessagingCommunicationException)
+                bool addErrorAction = exceptionEventArgs.Exception is MessagingEntityNotFoundException || exceptionEventArgs.Exception is MessagingCommunicationException;
+                _logError($"Action '{exceptionEventArgs.Action}' caused exception '{exceptionEventArgs.Exception.GetType()}', added to error actions '{addErrorAction}'. {Environment.NewLine}{exceptionEventArgs.Exception}.");
+                if (addErrorAction)
                 {
                     _errorActions.Add(this);
                 }
@@ -159,6 +173,11 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                         try
                         {
                             action.ReCreate(_settings, _namespaceManager);
+                            logMessage($"Recreated subscription.");
+                        }
+                        catch (MessagingEntityAlreadyExistsException exception)
+                        {
+                            logError($"Subscription already exists. {exception}");
                         }
                         catch (Exception exception)
                         {

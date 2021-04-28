@@ -145,5 +145,31 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
                 .Timeout(TimeSpan.FromSeconds(30))
                 .FirstAsync();
         }
+
+        [Fact]
+        public async void WhenSubscriptionMessagesListenerIsSubscribed_PreviousSubscriptionExists_ThenSubscriptionIsCreatedAgain()
+        {
+            var settings = TestSettings.MqSettingsForTopic();
+
+            var tickSeconds = 10;
+            var name = settings.TopicNameBuilder(typeof(TestMessageForTopic));
+            var nameSpace = NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
+            var topic = await nameSpace.CreateTopicAsync(name);
+            var subscriptionName = $"{topic.Path}.{settings.TopicSubscriberId}";
+            var initiallyCreated = DateTime.UtcNow;
+
+            var subscriptionDescription = new SubscriptionDescription(topic.Path, subscriptionName);
+            await nameSpace.CreateSubscriptionAsync(subscriptionDescription);
+
+            Thread.Sleep(TimeSpan.FromSeconds(tickSeconds));
+
+            var subscriber = new AzureBusTopicSubscriber(settings, _ => { }, _ => { });
+            var listener = subscriber.Messages<TestMessageForTopic>();
+            listener.Subscribe(_ => { });
+            var subscription = await nameSpace.GetSubscriptionAsync(topic.Path, subscriptionName);
+
+            var newlyCreated = subscription.CreatedAt > initiallyCreated.AddSeconds(tickSeconds);
+            Assert.True(newlyCreated);
+        }
     }
 }
