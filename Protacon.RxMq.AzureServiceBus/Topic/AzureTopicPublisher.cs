@@ -178,12 +178,10 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 var binding = TryBinding(topic, type, message);
                 if (binding != null)
                 {
+                    bool added = _bindings.TryAdd(topic, binding);
                     _logger.LogInformation(
-                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval)");
-                    bool success = _bindings.TryAdd(topic, binding);
-                    if (success) {
-                        cancellation.Cancel();
-                    }
+                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval, added '{added}')");
+                    cancellation.Cancel();
                 }
             }
         }
