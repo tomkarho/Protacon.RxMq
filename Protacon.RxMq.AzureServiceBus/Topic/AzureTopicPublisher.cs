@@ -179,8 +179,9 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 if (binding != null)
                 {
                     bool added = _bindings.TryAdd(topic, binding);
+                    var bindingInfo = added ? "added to bindings list" : "already existed in bindings list";
                     _logger.LogInformation(
-                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval, added '{added}')");
+                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval, {bindingInfo})");
                     cancellation.Cancel();
                 }
             }
