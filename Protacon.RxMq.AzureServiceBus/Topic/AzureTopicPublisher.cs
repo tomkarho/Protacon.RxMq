@@ -152,12 +152,11 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 var binding = TryBinding(topic, type, message);
                 if (binding != null)
                 {
+                    bool added = _bindings.TryAdd(topic, binding);
+                    var bindingInfo = added ? "added to bindings list" : "already existed in bindings list";
                     _logger.LogInformation(
-                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {i} of {instantRecoveryTries})");
-                    bool success = _bindings.TryAdd(topic, binding);
-                    if (!success) {
-                        continue;
-                    } 
+                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {i} of {instantRecoveryTries}, {bindingInfo})");
+
                     return _bindings[topic].SendAsync(message);
                 }
             }
@@ -178,12 +177,11 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 var binding = TryBinding(topic, type, message);
                 if (binding != null)
                 {
+                    bool added = _bindings.TryAdd(topic, binding);
+                    var bindingInfo = added ? "added to bindings list" : "already existed in bindings list";
                     _logger.LogInformation(
-                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval)");
-                    bool success = _bindings.TryAdd(topic, binding);
-                    if (success) {
-                        cancellation.Cancel();
-                    }
+                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval, {bindingInfo})");
+                    cancellation.Cancel();
                 }
             }
         }
