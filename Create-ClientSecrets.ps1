@@ -1,24 +1,25 @@
 param(
-    [Parameter()][string]$SettingsFile = 'developer-settings.json'
+    [Parameter()][string]$SettingsFile = 'developer-settings.json',
+    [Parameter()][string]$EnvironmentName = $SettingsFile.ResourceGroupName
 )
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-Write-Host "Reading settings from file '$SettingsFile'"
+Write-Host "Reading settings from file $SettingsFile"
 $settingsJson = Get-Content -Raw -Path $SettingsFile | ConvertFrom-Json
 
 $context = Get-AzContext
 
-$busKey = Get-AzServiceBusKey -ResourceGroupName $settingsJson.ResourceGroupName -Namespace $settingsJson.ResourceGroupName -Name 'RootManageSharedAccessKey'
+$busKey = Get-AzServiceBusKey -ResourceGroupName $EnvironmentName -Namespace $EnvironmentName -Name 'RootManageSharedAccessKey'
 
 $output = @{
     ConnectionString         = $busKey.PrimaryConnectionString
-    AzureResourceGroup       = $settingsJson.ResourceGroupName
+    AzureResourceGroup       = $EnvironmentName
     AzureSubscriptionId      = $context.Subscription.Id
     AzureSpAppId             = $settingsJson.ServicePrincipal.AppId
     AzureSpPassword          = $settingsJson.ServicePrincipal.Password
     AzureSpTenantId          = $context.Tenant.Id
-    AzureNamespace           = $settingsJson.ResourceGroupName
+    AzureNamespace           = $EnvironmentName
     AzureRetryMinimumBackoff = 5
     AzureRetryMaximumBackoff = 10
     AzureMaximumRetryCount   = 10
