@@ -5,11 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="System.Reactive" Version="5.0.0" />
     <PackageReference Include="WindowsAzure.ServiceBus" Version="4.1.3" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="All" />
   </ItemGroup>
+
+  <Import Project="packagerefs.net472.targets" Condition="'$(TargetFramework)' == 'net472'" />
+  <Import Project="packagerefs.net48.targets" Condition="'$(TargetFramework)' == 'net48'" />
 
   <ItemGroup>
     <ProjectReference Include="..\Protacon.RxMq.Abstractions\Protacon.RxMq.Abstractions.csproj" />
