@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472;net48;</TargetFrameworks>
+    <TargetFrameworks>net452;net472;net48;</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,6 +9,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="All" />
   </ItemGroup>
 
+  <Import Project="packagerefs.net452.targets" Condition="'$(TargetFramework)' == 'net452'" />
   <Import Project="packagerefs.net472.targets" Condition="'$(TargetFramework)' == 'net472'" />
   <Import Project="packagerefs.net48.targets" Condition="'$(TargetFramework)' == 'net48'" />
 
