@@ -41,7 +41,7 @@ subscriber.Messages<TestMessage>().Subscribe(message => Console.WriteLine(x.Exam
 
 Abstraction over Azure Service Bus.
 
-Contains modern .NET Core version and legacy (pre 4.7.2) version with full framework.
+Contains modern .NET Core version and legacy (4.5.2, 4.7.2, 4.8) version with full framework.
 
 ## Configuring
 
@@ -52,7 +52,7 @@ Configure `AzureQueueMqSettings`, there are configuration methods which can be o
 
 ## Developing
 
-Requires NET core 2.x. and .NET Framework SDK 4.5.2 and 4.6.1
+Requires NET core 2.x. and .NET Framework SDK 4.5.2, 4.7.2 and 4.8
 
 Setting up test environment
 

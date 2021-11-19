@@ -25,5 +25,10 @@ $output = @{
     AzureMaximumRetryCount   = 10
 }
 
-$output | ConvertTo-Json -depth 100 | Out-File "Protacon.RxMq.AzureServiceBus.Tests\client-secrets.json"
-Copy-Item "Protacon.RxMq.AzureServiceBus.Tests\client-secrets.json" -Destination "Protacon.RxMq.AzureServiceBusLegacy.Tests"
+$filename = "client-secrets.json"
+$projectLocation = "Protacon.RxMq.AzureServiceBus.Tests"
+$legacyProjectLocation = "Protacon.RxMq.AzureServiceBusLegacy.Tests"
+$output | ConvertTo-Json -depth 100 | Out-File "$projectLocation\$filename"
+Copy-Item "$projectLocation\$filename" -Destination $legacyProjectLocation
+
+Write-Host "Write file '$filename' to '$projectLocation', '$legacyProjectLocation'"

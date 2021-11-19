@@ -49,7 +49,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
             };
 
             publisher.Invoking(x => x.SendAsync(message).Wait())
-                .ShouldNotThrow<Exception>();
+                .Should().NotThrow<Exception>();
 
             await subscriber.Messages<TestMessageForQueue>()
                 .Timeout(TimeSpan.FromSeconds(30))

@@ -76,7 +76,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
                 .Where(x => x.ExampleId == invalidTenantMessageId)
                 .Timeout(TimeSpan.FromSeconds(15))
                 .Invoking(x => x.FirstAsync().Wait())
-                .ShouldThrow<TimeoutException>();
+                .Should().Throw<TimeoutException>();
         }
 
         [Fact]
