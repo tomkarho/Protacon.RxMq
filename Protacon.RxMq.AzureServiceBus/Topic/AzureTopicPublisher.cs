@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Protacon.RxMq.Abstractions;
+using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
 namespace Protacon.RxMq.AzureServiceBus.Topic
 {
@@ -76,6 +77,11 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 {
                     ContentType = "application/json"
                 };
+
+                if (message is IHasCorrelationId correlationMessage)
+                {
+                    body.CorrelationId = correlationMessage.CorrelationId ?? body.CorrelationId;
+                }
 
                 _settings.AzureMessagePropertyBuilder(message)
                     .ToList()

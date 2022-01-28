@@ -6,7 +6,7 @@ using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
 namespace Protacon.RxMq.AzureServiceBus.Topic
 {
-    public class AzureBusTopicSettings: AzureMqSettingsBase
+    public class AzureBusTopicSettings : AzureMqSettingsBase
     {
         public string TopicSubscriberId { get; set; } = Environment.MachineName;
 
@@ -14,7 +14,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         {
             var instance = Activator.CreateInstance(type);
 
-            if (instance is ITopicItem)
+            if (instance is ITopicItem t)
             {
                 return ((ITopicItem)instance).TopicName;
             }
@@ -26,18 +26,18 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         {
             create
                 .WithSizeInMB(1024)
-                .WithDefaultMessageTTL(TimeSpan.FromSeconds(60*5))
+                .WithDefaultMessageTTL(TimeSpan.FromSeconds(60 * 5))
                 .Create();
         };
 
         public Action<Microsoft.Azure.Management.ServiceBus.Fluent.Subscription.Definition.IBlank, Type> AzureSubscriptionBuilder { get; set; } = (create, messageType) =>
         {
             create
-                .WithDefaultMessageTTL(TimeSpan.FromSeconds(60*5))
+                .WithDefaultMessageTTL(TimeSpan.FromSeconds(60 * 5))
                 .Create();
         };
 
-        public Dictionary<string, Filter> AzureSubscriptionRules { get; set; } = new Dictionary<string, Filter> { { "getEverything", new TrueFilter() }};
-        public Func<object, Dictionary<string, object>> AzureMessagePropertyBuilder {get; set; } = message => new Dictionary<string, object>();
+        public Dictionary<string, Filter> AzureSubscriptionRules { get; set; } = new Dictionary<string, Filter> { { "getEverything", new TrueFilter() } };
+        public Func<object, Dictionary<string, object>> AzureMessagePropertyBuilder { get; set; } = message => new Dictionary<string, object>();
     }
 }
