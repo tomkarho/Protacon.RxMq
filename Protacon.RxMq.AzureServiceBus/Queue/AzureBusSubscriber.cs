@@ -11,14 +11,14 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBus.Queue
 {
-    public class AzureQueueSubscriber: IMqQueueSubscriber
+    public class AzureQueueSubscriber : IMqQueueSubscriber
     {
         private readonly AzureBusQueueSettings _settings;
         private readonly AzureBusQueueManagement _queueManagement;
         private readonly ILogger<AzureQueueSubscriber> _logging;
         private readonly Dictionary<Type, IDisposable> _bindings = new Dictionary<Type, IDisposable>();
 
-        private class Binding<T>: IDisposable where T: new()
+        private class Binding<T> : IDisposable where T : new()
         {
             private readonly IList<string> _excludeQueuesFromLogging;
 
@@ -40,7 +40,7 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
 
                             if (!_excludeQueuesFromLogging.Contains(queueName))
                             {
-                                logging.LogInformation($"Received '{queueName}': {body}");
+                                logging.LogInformation("Received '{queue}': {body}", queueName, body);
                             }
 
                             var asObject = AsObject(body);
@@ -49,11 +49,11 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
                         }
                         catch (Exception ex)
                         {
-                            logging.LogError($"Message {queueName}': {message} -> consumer error: {ex}");
+                            logging.LogError("Message {queue}': {message} -> consumer error: {ex}", queueName, message, ex);
                         }
                     }, new MessageHandlerOptions(async e =>
                     {
-                        logging.LogError($"At route '{queueName}' error occurred: {e.Exception}");
+                        logging.LogError("At route '{queue}' error occurred: {exception}", queueName, e.Exception);
                     }));
             }
 
@@ -82,12 +82,12 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
             _logging = logging;
         }
 
-        public IObservable<T> Messages<T>() where T: new()
+        public IObservable<T> Messages<T>() where T : new()
         {
-            if(!_bindings.ContainsKey(typeof(T)))
+            if (!_bindings.ContainsKey(typeof(T)))
                 _bindings.Add(typeof(T), new Binding<T>(_settings, _logging, _queueManagement));
 
-            return ((Binding<T>) _bindings[typeof(T)]).Subject;
+            return ((Binding<T>)_bindings[typeof(T)]).Subject;
         }
 
         public void Dispose()

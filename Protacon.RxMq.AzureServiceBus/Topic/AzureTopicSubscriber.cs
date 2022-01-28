@@ -14,17 +14,17 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBus.Topic
 {
-    public class AzureTopicSubscriber: IMqTopicSubscriber
+    public class AzureTopicSubscriber : IMqTopicSubscriber
     {
         private readonly AzureBusTopicSettings _settings;
         private readonly AzureBusTopicManagement _queueManagement;
         private readonly ILogger<AzureTopicSubscriber> _logging;
         private readonly ConcurrentDictionary<Type, IDisposable> _bindings = new ConcurrentDictionary<Type, IDisposable>();
-        
+
         private readonly BlockingCollection<IBinding> _errorActions = new BlockingCollection<IBinding>(1);
         private readonly CancellationTokenSource _source;
 
-        private class Binding<T>: IDisposable, IBinding where T: new()
+        private class Binding<T> : IDisposable, IBinding where T : new()
         {
             private readonly IList<string> _excludeTopicsFromLogging;
 
@@ -49,7 +49,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
                             if (!_excludeTopicsFromLogging.Contains(topicName))
                             {
-                                logging.LogInformation($"Received '{subscriptionName}': {body} with Azure MessageId: '{message.MessageId}'");
+                                logging.LogInformation("Received '{subscription}': {body} with Azure MessageId: '{messageId}'", subscriptionName, body, message.MessageId);
                             }
 
                             var asObject = AsObject(body);
@@ -58,11 +58,11 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                         }
                         catch (Exception ex)
                         {
-                            logging.LogError(ex, $"Message {subscriptionName}': {message} -> consumer error: {ex}");
+                            logging.LogError(ex, "Message {subscription}': {message} -> consumer error: {exception}", subscriptionName, message, ex);
                         }
                     }, new MessageHandlerOptions(async e =>
                     {
-                        logging.LogError(e.Exception, $"At route '{subscriptionName}' error occurred: {e.Exception}.");
+                        logging.LogError(e.Exception, "At route '{subscription}' error occurred: {exception}.", subscriptionName, e.Exception);
                         if (e.Exception is ServiceBusCommunicationException || e.Exception is MessagingEntityNotFoundException)
                         {
                             errorActions.Add(this);
@@ -136,7 +136,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                     }
                     catch (OperationCanceledException exception)
                     {
-                        _logging.LogDebug(exception, $"Stopping {nameof(AzureTopicSubscriber)}");
+                        _logging.LogDebug(exception, "Stopping {className}", nameof(AzureTopicSubscriber));
                     }
                     catch (Exception exception)
                     {
@@ -145,15 +145,15 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 }
             }, _source.Token);
         }
-        
-        public IObservable<T> Messages<T>() where T: new()
+
+        public IObservable<T> Messages<T>() where T : new()
         {
             if (!_bindings.ContainsKey(typeof(T)))
             {
                 _bindings.TryAdd(typeof(T), new Binding<T>(_settings, _logging, _queueManagement, _errorActions));
             }
 
-            return ((Binding<T>) _bindings[typeof(T)]).Subject;
+            return ((Binding<T>)_bindings[typeof(T)]).Subject;
         }
 
         public void Dispose()

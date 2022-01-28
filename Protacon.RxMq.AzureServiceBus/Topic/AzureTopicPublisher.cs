@@ -45,14 +45,14 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                 _topic = topic;
                 _excludeTopicsFromLogging = new LoggingConfiguration().ExcludeTopicsFromLogging();
                 queueManagement.CreateTopicIfMissing(_topic, type);
-                
+
                 var retryPolicy = new RetryExponential(
                     TimeSpan.FromSeconds(settings.AzureRetryMinimumBackoff),
                     TimeSpan.FromSeconds(settings.AzureRetryMaximumBackoff),
                     settings.AzureMaximumRetryCount
                 );
                 _topicClient = new TopicClient(settings.ConnectionString, _topic, retryPolicy);
-                _logger.LogInformation($"Created new MQ binding '{_topic}'.");
+                _logger.LogInformation("Created new MQ binding '{topic}'.", _topic);
             }
 
             public Task SendAsync(object message)
@@ -67,7 +67,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
                 if (!_excludeTopicsFromLogging.Contains(_topic))
                 {
-                    _logger.LogInformation($"{nameof(SendAsync)}/{_topic} sending message to queue '{message}'");
+                    _logger.LogInformation("{method}/{topic} sending message to queue '{message}'", nameof(SendAsync), _topic, message);
                 }
 
                 var contentJsonBytes = Encoding.UTF8.GetBytes(asJson);
@@ -83,7 +83,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
                 return _topicClient.SendAsync(body);
             }
-    
+
             public void Dispose()
             {
                 _topicClient.CloseAsync();
@@ -106,28 +106,29 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
         }
 
         public Task SendAsync<T>(T message) where T : new()
-        { 
+        {
             try
             {
                 var topic = _settings.TopicNameBuilder(message.GetType());
 
-            if (!_bindings.ContainsKey(topic))
-                return TryCreateBinding(topic, typeof(T), message, TriesBeforeInterval, TimeSpan.FromSeconds(IntervalOfBindingRetry));
-            
-            return _bindings[topic].SendAsync(message);
+                if (!_bindings.ContainsKey(topic))
+                    return TryCreateBinding(topic, typeof(T), message, TriesBeforeInterval, TimeSpan.FromSeconds(IntervalOfBindingRetry));
+
+                return _bindings[topic].SendAsync(message);
             }
             catch (Exception e)
             {
-                  _logger.LogError($"{nameof(SendAsync)}: Failed to send async message '{message}' '{e.Message}'{Environment.NewLine}'{e.StackTrace}'");
-                 if (RetrySendMsgCount < maxSendAsyncRetries) {
-                     RetrySendMsgCount++;
-                    _logger.LogInformation($"{nameof(SendAsync)}: trying to send message again,  Trying to send message again '{RetrySendMsgCount}/{maxSendAsyncRetries}'");
-                     return SendAsync(message);
-                 } 
-                 else
-                 {
-                     throw e;
-                 }
+                _logger.LogError(e, "{method}: Failed to send async message '{message}' '{exceptionMessage}'{newLine}'{stackTrace}'", nameof(SendAsync), message, e.Message, Environment.NewLine, e.StackTrace);
+                if (RetrySendMsgCount < maxSendAsyncRetries)
+                {
+                    RetrySendMsgCount++;
+                    _logger.LogInformation("{method}: trying to send message again,  Trying to send message again '{sendCount}/{maxSendAsyncRetries}'", nameof(SendAsync), RetrySendMsgCount, maxSendAsyncRetries);
+                    return SendAsync(message);
+                }
+                else
+                {
+                    throw e;
+                }
             }
         }
 
@@ -147,7 +148,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             for (var i = 1; i <= instantRecoveryTries; i++)
             {
                 _logger.LogDebug(
-                    $"{nameof(TryCreateBinding)}: Try {i} of {instantRecoveryTries} for binding ('{topic}')");
+                    "{method}: Try {tryNumber} of {instantRecoveryTries} for binding ('{topic}')", nameof(TryCreateBinding), i, topic);
 
                 var binding = TryBinding(topic, type, message);
                 if (binding != null)
@@ -155,15 +156,15 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
                     bool added = _bindings.TryAdd(topic, binding);
                     var bindingInfo = added ? "added to bindings list" : "already existed in bindings list";
                     _logger.LogInformation(
-                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {i} of {instantRecoveryTries}, {bindingInfo})");
+                        "{method}: Binding successful ('{topic}', binding {tryNumber} of {instantRecoveryTries}, {bindingInfo})", nameof(TryCreateBinding), topic, i, instantRecoveryTries, bindingInfo);
 
                     return _bindings[topic].SendAsync(message);
                 }
             }
 
             _logger.LogInformation(
-                $"{nameof(TryCreateBinding)}: Could not create binding in instantRecoveryTries tries ('{topic}', {instantRecoveryTries} tries). " +
-                $"Trying again every {lifeCycleRecoveryInterval} sec.");
+                "{method}: Could not create binding in instantRecoveryTries tries ('{topic}', {instantRecoveryTries} tries). " +
+                "Trying again every {lifeCycleRecoveryInterval} sec.", nameof(TryCreateBinding), topic, instantRecoveryTries, lifeCycleRecoveryInterval);
 
             RepeatActionEvery(TryLifeCycleBinding, lifeCycleRecoveryInterval, cancellation.Token)
                 .Wait();
@@ -173,14 +174,14 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             {
                 lifeCycleTryCount++;
                 _logger.LogInformation(
-                    $"{nameof(TryCreateBinding)}: Try {lifeCycleTryCount} of lifeCycleRecoveryInterval ('{topic}')");
+                    "{method}: Try {lifeCycleTryCount} of lifeCycleRecoveryInterval ('{topic}')", nameof(TryCreateBinding), lifeCycleTryCount, topic);
                 var binding = TryBinding(topic, type, message);
                 if (binding != null)
                 {
                     bool added = _bindings.TryAdd(topic, binding);
                     var bindingInfo = added ? "added to bindings list" : "already existed in bindings list";
                     _logger.LogInformation(
-                        $"{nameof(TryCreateBinding)}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval, {bindingInfo})");
+                        "{method}: Binding successful ('{topic}', binding {lifeCycleTryCount} of lifeCycleRecoveryInterval, {bindingInfo})", nameof(TryCreateBinding), topic, lifeCycleTryCount, bindingInfo);
                     cancellation.Cancel();
                 }
             }
@@ -195,8 +196,8 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
             }
             catch (Exception e)
             {
-                _logger.LogError(
-                    $"{nameof(TryBinding)}: Calling recovery on topic '{topic}' for new Binding. Cause: error occurred {e}");
+                _logger.LogError(e,
+                    "{method}: Calling recovery on topic '{topic}' for new Binding. Cause: error occurred {e}", nameof(TryBinding), topic, e);
                 return null;
             }
         }
