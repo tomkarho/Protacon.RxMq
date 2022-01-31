@@ -13,7 +13,7 @@ namespace Protacon.RxMq.AzureServiceBus
         public string AzureResourceGroup { get; set; }
         public string AzureNamespace { get; set; }
         public string AzureSubscriptionId { get; set; }
-        public int AzureRetryMinimumBackoff { get; set; } = 5;  
+        public int AzureRetryMinimumBackoff { get; set; } = 5;
         public int AzureRetryMaximumBackoff { get; set; } = 30;
         public int AzureMaximumRetryCount { get; set; } = 3;
     }

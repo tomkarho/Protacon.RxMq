@@ -34,7 +34,7 @@ namespace Protacon.RxMq.ConsoleExample
                 _subscriber.Messages<CorrelationTestMessage3>().Subscribe(HandleThirdCorrelation)
             };
 
-            _messageSender = new Timer(ExecuteTask, null, TimeSpan.FromSeconds(15), TimeSpan.FromMilliseconds(-1));
+            _messageSender = new Timer(ExecuteTask, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15));
             return Task.CompletedTask;
         }
 
