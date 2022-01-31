@@ -1,6 +1,6 @@
 param(
     [Parameter()][string]$SettingsFile = 'developer-settings.json',
-    [Parameter()][string]$EnvironmentName = $SettingsFile.ResourceGroupName
+    [Parameter(Mandatory)][string]$EnvironmentName
 )
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest

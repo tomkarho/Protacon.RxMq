@@ -26,6 +26,47 @@
             "sku": {
                 "name": "Standard"
             }
+        },
+        {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "name": "[resourceGroup().name]",
+            "apiVersion": "2020-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "features": {
+                    "searchVersion": 1,
+                    "legacy": 0,
+                    "enableLogAccessUsingOnlyResourcePermissions": "false"
+                }
+            }
+        },
+        {
+            "name": "[resourceGroup().name]",
+            "type": "microsoft.insights/components",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', concat(resourceGroup().name) )]"
+            ],
+            "tags": {
+                "displayName": "Application insights"
+            },
+            "apiVersion": "2020-02-02-preview",
+            "properties": {
+                "ApplicationId": "[resourceGroup().name]",
+                "Application_Type": "web",
+                "Flow_Type": "Redfield",
+                "Request_Source": "CustomDeployment",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', concat(resourceGroup().name))]"
+            }
         }
-    ]
+    ],
+    "outputs": {
+        "instrumentationKey": {
+            "value": "[reference(resourceId('Microsoft.Insights/components', resourceGroup().name), '2014-04-01').InstrumentationKey]",
+            "type": "string"
+        }
+    }
 }
