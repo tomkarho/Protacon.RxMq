@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Azure.ServiceBus;
 using Protacon.RxMq.Abstractions.DefaultMessageRouting;
@@ -16,7 +15,7 @@ namespace Protacon.RxMq.AzureServiceBus.Topic
 
             if (instance is ITopicItem t)
             {
-                return ((ITopicItem)instance).TopicName;
+                return t.TopicName;
             }
 
             throw new InvalidOperationException($"Default implementation of queue name builder expects used objects to extend '{nameof(ITopicItem)}'");
