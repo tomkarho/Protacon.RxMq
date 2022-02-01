@@ -49,7 +49,7 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
                         }
                         catch (Exception ex)
                         {
-                            logging.LogError("Message {queue}': {message} -> consumer error: {ex}", queueName, message, ex);
+                            logging.LogError("Message '{queue}': {message} -> consumer error: {ex}", queueName, message, ex);
                         }
                     }, new MessageHandlerOptions(async e =>
                     {
