@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/2bje1v2br53g8377?svg=true)](https://ci.appveyor.com/project/savpek/protacon-rxmq)
+[![Build Status](https://dev.azure.com/Protacon/Protacon.RxMq/_apis/build/status/by-pinja.Protacon.RxMq?branchName=refs%2Fpull%2F32%2Fmerge)](https://dev.azure.com/Protacon/Protacon.RxMq/_build/latest?definitionId=19&branchName=refs%2Fpull%2F32%2Fmerge)
 [![Nuget](https://img.shields.io/nuget/dt/Protacon.RxMq.Abstractions.svg)](https://www.nuget.org/packages/Protacon.RxMq.Abstractions/)
 [![Nuget](https://img.shields.io/nuget/dt/Protacon.RxMq.AzureServiceBus.svg)](https://www.nuget.org/packages/Protacon.RxMq.AzureServiceBus/)
 [![Nuget](https://img.shields.io/nuget/dt/Protacon.RxMq.AzureServiceBusLegacy.svg)](https://www.nuget.org/packages/Protacon.RxMq.AzureServiceBusLegacy/)
@@ -85,21 +85,27 @@ In powershell, this can be done with
 ```powershell
 $env:ReferenceAssemblyRoot = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework'
 ```
+
 ## Tests
 
 To be able to run tests
-1. login to Azure with command line (Az login) 
+
+1. login to Azure with command line (Az login)
 1. in root create developer-settings.json file for configuring test environment (Azure rg with service bus). Check developer-settings-example.json for reference
    (tag is vf subproject for devops if environment is created into pinja dev subscription)
-1. run in Testing folder 
+1. run in Testing folder
+
     ```poweshell
     Prepare-Testenvironment -SettingsFile developer-settings.json
     ```
-1. In root run 
+
+1. In root run
+
     ```powershell
     Create-setcets.ps1 -SettingsFile developer-settings.json
     ```
-    This file creates secrets for test settings (dont commit) 
+
+    This file creates secrets for test settings (dont commit)
 1. run tests in core and legacy projects
 
 ## Creating and publishing nuget packages by hand if needed
@@ -108,23 +114,25 @@ note: You must have nuget credentials added to 'Protacon Nuget packages' repo to
 
 1. Make new release in Github with next version number and add description what is being changed
 1. Create folder artifacts in same forlder where csproj to be published is located
-1. In rootfolder run: 
+1. In rootfolder run:
+
     ```bash
     dotnet pack .\Protacon.RxMq.PLACEPROJECTFOLDERHERE\Protacon.RxMq.PLACEPROJECTHERE.csproj -c Release -o .\Protacon.RxMq.PLACEPROJECTFOLDERHERE\artifacts /p:Version=x.x.x 
     ```
+
     (version same as github release number)
 1. Create ApiKey in Nuget Gallery (owner Protacon, select RxMq packages)
 1. In artifacts folder publish to nuget.org:
+
     ```bash
     dotnet nuget push Protacon.RxMq.PACKETPROJECT.x.x.x.nupkg --api-key YOURAPIKEY --source https://api.nuget.org/v3/index.json
     ```
-    
-## CI 
 
-Project uses Azure devops pipeline https://dev.azure.com/Protacon/Protacon.RxMq   
-Pipeline is authorized with service principal read from devops secret file    
-Nuget api key is devops pipeline variable $(nugetApiKey) create new in nuget org in your account if needed   
-It publishes nugets to https://www.nuget.org/packages?q=rxmq   
+## CI
+
+Project uses Azure devops pipeline <https://dev.azure.com/Protacon/Protacon.RxMq>
+Pipeline is authorized with service principal read from devops secret file
+Nuget api key is devops pipeline variable $(nugetApiKey) create new in nuget org in your account if needed
+It publishes nugets to <https://www.nuget.org/packages?q=rxmq>
 Pipeline tag build triggers when new release with tag is made in github  
 Pipeline flow : build-create env for tests with secrets - run test -tear down env - if tag (release) publish nugets  
-

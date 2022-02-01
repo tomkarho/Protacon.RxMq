@@ -42,8 +42,9 @@ namespace Protacon.RxMq.AzureServiceBus.Tests
             var correctTenantId = Guid.NewGuid();
             var invalidTenantId = Guid.NewGuid();
 
-            var settings = TestSettings.TopicSettingsOptions(s => {
-                s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { {"tenant", ((TestMessageForTopic)message).TenantId } };
+            var settings = TestSettings.TopicSettingsOptions(s =>
+            {
+                s.AzureMessagePropertyBuilder = message => new Dictionary<string, object> { { "tenant", ((TestMessageForTopic)message).TenantId } };
                 s.AzureSubscriptionRules.Clear();
                 s.AzureSubscriptionRules.Add("filter", new SqlFilter($"user.tenant='{correctTenantId}'"));
             });

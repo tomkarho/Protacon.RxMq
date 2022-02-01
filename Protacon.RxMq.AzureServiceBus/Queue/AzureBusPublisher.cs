@@ -12,14 +12,14 @@ using Protacon.RxMq.Abstractions;
 
 namespace Protacon.RxMq.AzureServiceBus.Queue
 {
-    public class AzureQueuePublisher: IMqQueuePublisher
+    public class AzureQueuePublisher : IMqQueuePublisher
     {
         private readonly AzureBusQueueSettings _settings;
         private readonly AzureBusQueueManagement _queueManagement;
         private readonly ILogger<AzureQueuePublisher> _logger;
         private readonly Dictionary<string, Binding> _bindings = new Dictionary<string, Binding>();
 
-        private class Binding: IDisposable
+        private class Binding : IDisposable
         {
             private readonly QueueClient _queueClient;
             private readonly ILogger<AzureQueuePublisher> _logger;
@@ -39,14 +39,14 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
                 _queueClient = new QueueClient(settings.ConnectionString, _queue);
                 _excludeQueuesFromLogging = new LoggingConfiguration().ExcludeQueuesFromLogging();
 
-                logger.LogInformation($"Created new MQ binding '{_queue}'.");
+                logger.LogInformation("Created new MQ binding '{queue}'.", _queue);
                 _logger = logger;
             }
 
             public Task SendAsync(object message)
             {
                 var asJson = JsonConvert.SerializeObject(
-                        new {Data = message},
+                        new { Data = message },
                         Formatting.None,
                         new JsonSerializerSettings
                         {
@@ -55,7 +55,7 @@ namespace Protacon.RxMq.AzureServiceBus.Queue
 
                 if (!_excludeQueuesFromLogging.Contains(_queue))
                 {
-                    _logger.LogDebug($"{nameof(SendAsync)}/{_queue} sending message '{message}'");
+                    _logger.LogDebug("{method}/{queue} sending message '{message}'", nameof(SendAsync), _queue, message);
                 }
 
                 var contentJsonBytes = Encoding.UTF8.GetBytes(asJson);
