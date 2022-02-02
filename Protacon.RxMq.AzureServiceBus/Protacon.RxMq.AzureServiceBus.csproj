@@ -2,11 +2,13 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net48;</TargetFrameworks>
+    <!-- Disable warnings in RegisterMessageHandler etc. -->
+    <NoWarn>$(NoWarn);1998</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Management.ServiceBus.Fluent" Version="1.18.0" />
-    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.0.0" />
