@@ -7,7 +7,7 @@ trigger:
     - "*"
 
 pool:
-  vmImage: 'vs2017-win2016'
+  vmImage: 'windows-2022'
 
 variables:
   solution: '**/*.sln'
@@ -75,7 +75,7 @@ jobs:
 
 - job: 'publish'
   dependsOn: 'build'
-  condition: eq(variables.isTagBuild, true)
+  condition: and(succeeded(), eq(variables.isTagBuild, true))
   steps:
   - pwsh: |
         $tag = ($Env:BUILD_SOURCEBRANCH -Replace 'refs/tags/','')
