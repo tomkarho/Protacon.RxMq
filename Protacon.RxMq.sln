@@ -1,19 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.15
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.Abstractions", "Protacon.RxMq.Abstractions\Protacon.RxMq.Abstractions.csproj", "{F4019994-11DE-4CE8-980E-1B2E2709E05E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.AzureServiceBus", "Protacon.RxMq.AzureServiceBus\Protacon.RxMq.AzureServiceBus.csproj", "{D64BB6F2-5613-45E9-B440-3E579E8F2008}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protacon.RxMq.AzureServiceBus.Tests", "Protacon.RxMq.AzureServiceBus.Tests\Protacon.RxMq.AzureServiceBus.Tests.csproj", "{6A7DF81D-5B29-462B-BFC0-D67372D92C58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.AzureServiceBus.Tests", "Protacon.RxMq.AzureServiceBus.Tests\Protacon.RxMq.AzureServiceBus.Tests.csproj", "{6A7DF81D-5B29-462B-BFC0-D67372D92C58}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protacon.RxMq.AzureServiceBusLegacy", "Protacon.RxMq.AzureServiceBusLegacy\Protacon.RxMq.AzureServiceBusLegacy.csproj", "{4CC2B564-5B30-445E-94AC-2B74FDF20A06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.AzureServiceBusLegacy", "Protacon.RxMq.AzureServiceBusLegacy\Protacon.RxMq.AzureServiceBusLegacy.csproj", "{4CC2B564-5B30-445E-94AC-2B74FDF20A06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protacon.RxMq.AzureServiceBusLegacy.Tests", "Protacon.RxMq.AzureServiceBusLegacy.Tests\Protacon.RxMq.AzureServiceBusLegacy.Tests.csproj", "{6963FD29-24E1-4300-AF88-98A43F536AB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.AzureServiceBusLegacy.Tests", "Protacon.RxMq.AzureServiceBusLegacy.Tests\Protacon.RxMq.AzureServiceBusLegacy.Tests.csproj", "{6963FD29-24E1-4300-AF88-98A43F536AB4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protacon.RxMq.ConsoleExample", "Protacon.RxMq.ConsoleExample\Protacon.RxMq.ConsoleExample.csproj", "{C8E590C3-F917-4EE7-AA2F-F22B43AEDBD2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protacon.RxMq.ConsoleExample", "Protacon.RxMq.ConsoleExample\Protacon.RxMq.ConsoleExample.csproj", "{C8E590C3-F917-4EE7-AA2F-F22B43AEDBD2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protacon.RxMq.LegacyConsoleExample", "Protacon.RxMq.LegacyConsoleExample\Protacon.RxMq.LegacyConsoleExample.csproj", "{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,6 +99,18 @@ Global
 		{C8E590C3-F917-4EE7-AA2F-F22B43AEDBD2}.Release|x64.Build.0 = Release|Any CPU
 		{C8E590C3-F917-4EE7-AA2F-F22B43AEDBD2}.Release|x86.ActiveCfg = Release|Any CPU
 		{C8E590C3-F917-4EE7-AA2F-F22B43AEDBD2}.Release|x86.Build.0 = Release|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Debug|x64.Build.0 = Debug|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Debug|x86.Build.0 = Debug|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Release|x64.ActiveCfg = Release|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Release|x64.Build.0 = Release|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Release|x86.ActiveCfg = Release|Any CPU
+		{77FFA43C-4D44-49D4-9B5F-3D0855AC36C3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

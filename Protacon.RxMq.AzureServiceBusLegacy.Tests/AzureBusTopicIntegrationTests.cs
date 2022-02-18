@@ -35,6 +35,27 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
         }
 
         [Fact]
+        public async void WhenMessageIsSend_CorrelationIdCanBeUsed()
+        {
+            var settings = TestSettings.MqSettingsForTopic();
+            var publisher = new AzureBusTopicPublisher(settings, _ => { }, _ => { });
+            var subscriber = new AzureBusTopicSubscriber(settings, _ => { }, _ => { });
+
+            var id = Guid.NewGuid();
+            var listener = subscriber.Messages<TestMessageForTopic>();
+
+            await publisher.SendAsync(new TestMessageForTopic
+            {
+                CorrelationId = id.ToString()
+            });
+
+            await listener
+                .Where(x => x.CorrelationId == id.ToString())
+                .Timeout(TimeSpan.FromSeconds(10))
+                .FirstAsync();
+        }
+
+        [Fact]
         public async void WhenFiltersAreSet_ThenDontReturnInvalidTenantMessages()
         {
             // Arrrange.
@@ -151,7 +172,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Tests
         {
             var settings = TestSettings.MqSettingsForTopic();
 
-            var tickSeconds = 10;
+            var tickSeconds = 15;
             var name = settings.TopicNameBuilder(typeof(TestMessageForTopic));
             var nameSpace = NamespaceManager.CreateFromConnectionString(settings.ConnectionString);
             var topic = await nameSpace.CreateTopicAsync(name);

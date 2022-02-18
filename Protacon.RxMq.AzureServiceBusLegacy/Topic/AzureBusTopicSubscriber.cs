@@ -49,11 +49,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 MakeSureSubscriptionExists(namespaceManager, settings, topicPath, subscriptionName, true);
 
                 _receiver = messagingFactory.CreateSubscriptionClient(topicPath, subscriptionName);
-                _receiver.RemoveRule("$default");
-
-                settings.AzureSubscriptionRules
-                    .ToList()
-                    .ForEach(x => _receiver.AddRule(x.Key, x.Value));
+                UpdateRules(settings);
 
                 _options = new OnMessageOptions { AutoComplete = true };
                 _options.ExceptionReceived += OptionsOnExceptionReceived;
