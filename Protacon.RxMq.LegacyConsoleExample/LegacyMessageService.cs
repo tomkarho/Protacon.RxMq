@@ -33,7 +33,7 @@ namespace Protacon.RxMq.LegacyConsoleExample
 
         private void HandleFirstCorrelation(CorrelationLegacyTestMessage1 message)
         {
-            Console.WriteLine("Received legacy correlation message 1. Correlatio ID " + message.CorrelationId);
+            Console.WriteLine("Received legacy correlation message 1. Correlation ID " + message.CorrelationId);
             _publisher.SendAsync(new CorrelationLegacyTestMessage2
             {
                 CorrelationId = message.CorrelationId
@@ -42,7 +42,7 @@ namespace Protacon.RxMq.LegacyConsoleExample
 
         private void HandleSecondCorrelation(CorrelationLegacyTestMessage2 message)
         {
-            Console.WriteLine("Received legacy correlation message 2. Correlatio ID " + message.CorrelationId);
+            Console.WriteLine("Received legacy correlation message 2. Correlation ID " + message.CorrelationId);
             _publisher.SendAsync(new CorrelationLegacyTestMessage3
             {
                 CorrelationId = message.CorrelationId
@@ -51,7 +51,7 @@ namespace Protacon.RxMq.LegacyConsoleExample
 
         private void HandleThirdCorrelation(CorrelationLegacyTestMessage3 message)
         {
-            Console.WriteLine("Received legacy correlation message 3. Correlatio ID " + message.CorrelationId);
+            Console.WriteLine("Received legacy correlation message 3. Correlation ID " + message.CorrelationId);
             Console.WriteLine("This is last legacy message of correlation saga.");
         }
 
@@ -77,21 +77,18 @@ namespace Protacon.RxMq.LegacyConsoleExample
     public class CorrelationLegacyTestMessage1 : ITopicItem, IHasCorrelationId
     {
         public string TopicName => "correlation-legacy-test-message1";
-
         public string CorrelationId { get; set; }
     }
 
     public class CorrelationLegacyTestMessage2 : ITopicItem, IHasCorrelationId
     {
         public string TopicName => "correlation-legacy-test-message2";
-
         public string CorrelationId { get; set; }
     }
 
     public class CorrelationLegacyTestMessage3 : ITopicItem, IHasCorrelationId
     {
         public string TopicName => "correlation-legacy-test-message3";
-
         public string CorrelationId { get; set; }
     }
 }
