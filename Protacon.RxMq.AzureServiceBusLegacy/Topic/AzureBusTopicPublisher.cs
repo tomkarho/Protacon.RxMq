@@ -10,6 +10,7 @@ using Microsoft.ServiceBus.Messaging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Protacon.RxMq.Abstractions;
+using Protacon.RxMq.Abstractions.DefaultMessageRouting;
 
 namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
 {
@@ -59,7 +60,7 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
 
                 var body =
                     JsonConvert.SerializeObject(
-                        new {Data = message},
+                        new { Data = message },
                         Formatting.None,
                         new JsonSerializerSettings
                         {
@@ -74,6 +75,11 @@ namespace Protacon.RxMq.AzureServiceBusLegacy.Topic
                 {
                     ContentType = "application/json"
                 };
+
+                if (message is IHasCorrelationId correlationMessage)
+                {
+                    brokeredMessage.CorrelationId = correlationMessage.CorrelationId ?? brokeredMessage.CorrelationId;
+                }
 
                 _azureTopicMqSettings.AzureMessagePropertyBuilder(message)
                     .ToList()
